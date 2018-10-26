@@ -105,6 +105,37 @@ function zrxiv_make_checkbox(tag, checked)
 	return label;
 }
 
+function prevent_auto_save(action)
+{
+	if(action == 'check')
+	{
+		return Promise(function(resolve)
+		{
+			chrome.storage.sync.get({prevent_auto_save : []}, function(docs) { resolve(docs.indexOf(zrxiv_document_id) >= 0); } );
+		});
+	}
+	else if(action == 'add')
+	{
+		chrome.storage.sync.get({prevent_auto_save : []}, function(docs) {
+			if(docs.indexOf(zrxiv_document_id) < 0)
+			{
+				docs.push(zrxiv_document_id);
+				chrome.storage.sync.set({prevent_auto_save : docs}, function(){});
+			}
+		});
+	}
+	else if(action == 'remove')
+	{
+		chrome.storage.sync.get({prevent_auto_save : []}, function(docs) {
+			if(docs.indexOf(zrxiv_document_id) >= 0)
+			{
+				docs = docs.filter(x => x != zrxiv_document_id);
+				chrome.storage.sync.set({prevent_auto_save : docs}, function(){});
+			}
+		});
+	}
+}
+
 function zrxiv_toggle(action)
 {
 	var zrxiv_toggle_button = document.getElementById('zrxiv_toggle');
@@ -122,15 +153,19 @@ function zrxiv_toggle(action)
 	else if(action == 'save' || action == 'saved')
 	{
 		if(action == 'save')
+		{
 			zrxiv_document_put({ message : 'Add ' + zrxiv_document_id, content : btoa(JSON.stringify({id : zrxiv_document_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] }, null, 2)) })
-				.then(res => zrxiv_tags_render(true));
+				.then(res => zrxiv_tags_render(true))
+				.then(res => prevent_auto_save('remove'));
+		}
 		zrxiv_toggle_button.dataset.action = 'delete';
 		zrxiv_toggle_button.innerText = 'Delete';
 	}
 	else if(action == 'delete')
 	{
 		zrxiv_document_del()
-			.then(res => zrxiv_tags_render(false));
+			.then(res => zrxiv_tags_render(false))
+			.then(res => prevent_auto_save('add'));
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
 	}
@@ -198,8 +233,7 @@ function zrxiv_init(options)
 		.then(([doc, tags]) => 
 		{
 			zrxiv_tags_render(false, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
-			var prevent_auto_save = false;
-		
+					
 			if(doc != null)
 			{
 				zrxiv_tags_render(true);
@@ -207,7 +241,7 @@ function zrxiv_init(options)
 			}
 			else
 			{
-				if(prevent_auto_save || !zrxiv_auto_save_timeout)
+				if(prevent_auto_save('check') || !zrxiv_auto_save_timeout)
 					zrxiv_toggle('prevent-auto-save');
 				else
 				{
