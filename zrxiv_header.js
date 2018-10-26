@@ -47,7 +47,7 @@ function zrxiv_document_del()
 		.then(res => res.json())
 		.then(res =>
 		{
-			fetch(zrxiv_github_api + '/contents/_data/documents/' + zrxiv_document_id + '.json',
+			return fetch(zrxiv_github_api + '/contents/_data/documents/' + zrxiv_document_id + '.json',
 			{
 				method : 'delete',
 				headers : {
@@ -56,15 +56,13 @@ function zrxiv_document_del()
 				},
 				body : JSON.stringify({message : 'Delete ' + zrxiv_document_id, sha : res.sha})
 			})
-			.then(res => zrxiv_tags_render(false));
 		});
 }
 
-function zrxiv_tag_add()
+function zrxiv_tag_add(tag)
 {
-	var tag = document.getElementById('zrxiv_tag').value;
 	console.log('zrxiv', 'tag add', tag);
-	fetch(zrxiv_github_api + '/contents/_data/tags/' + tag + '.json',
+	return fetch(zrxiv_github_api + '/contents/_data/tags/' + tag + '.json',
 	{
 		method : 'put',
 		headers : {
@@ -72,12 +70,7 @@ function zrxiv_tag_add()
 			'Authorization' : 'Basic ' + btoa(zrxiv_github_username_token)
 		},
 		body : JSON.stringify({message : 'Create tag ' + tag, content : '' })
-	})
-		.then(res => zrxiv_tag_changed(tag, true))
-		.then(res => {
-			document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(tag, true));
-			document.getElementById('zrxiv_tag').value = '';
-		});
+	});
 }
 
 function zrxiv_tag_changed(tag, checked)
@@ -136,7 +129,8 @@ function zrxiv_toggle(action)
 	}
 	else if(action == 'delete')
 	{
-		zrxiv_document_del();
+		zrxiv_document_del()
+			.then(res => zrxiv_tags_render(false));
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
 	}
@@ -186,7 +180,16 @@ function zrxiv_init(options)
 	zrxiv_auto_save_timeout = options.zrxiv_auto_save_timeout != null ? parseInt(options.zrxiv_auto_save_timeout) : null;
 
 	document.getElementById('zrxiv_site').href = options.zrxiv_github_repo;
-	document.getElementById('zrxiv_tag_add').addEventListener('click', zrxiv_tag_add);
+	document.getElementById('zrxiv_tag_add').addEventListener('click', function(event)
+	{
+		var tag = document.getElementById('zrxiv_tag').value;
+		zrxiv_tag_add()
+			.then(res => zrxiv_tag_changed(tag, true))
+			.then(res => {
+				document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(tag, true));
+				document.getElementById('zrxiv_tag').value = '';
+			});
+	});
 	document.getElementById('zrxiv_toggle').addEventListener('click', function(event) { zrxiv_toggle(this.dataset.action); } );
 	document.getElementById('zrxiv_tag').addEventListener('keyup', function(event) { if (event.keyCode == 13) document.getElementById('zrxiv_tag_add').click(); });
 
