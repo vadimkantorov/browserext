@@ -188,17 +188,12 @@ function zrxiv_tags_render(show, tags_on, tags)
 
 	if(show)
 	{
-		document.getElementById('zrxiv_tags_label').style.display = '';
-		document.getElementById('zrxiv_tag').style.display = '';
-		document.getElementById('zrxiv_tag_add').style.display = '';
+		document.querySelectorAll('#zrxiv_tags_label, #zrxiv_tag, #zrxiv_tag_add, #zrxiv_tags').forEach(elem => {elem.style.display = '';});
 		zrxiv_tags.style.display = 'inline';
 	}
 	else
 	{
-		document.getElementById('zrxiv_tags_label').style.display = 'none';
-		document.getElementById('zrxiv_tag').style.display = 'none';
-		document.getElementById('zrxiv_tag_add').style.display = 'none';
-		zrxiv_tags.style.display = 'none';
+		document.querySelectorAll('#zrxiv_tags_label, #zrxiv_tag, #zrxiv_tag_add, #zrxiv_tags').forEach(elem => {elem.style.display = 'none';});
 		document.querySelectorAll('.zrxiv_checkbox').forEach(checkbox => {checkbox.checked = false;});
 	}
 }
@@ -261,13 +256,17 @@ fetch(chrome.extension.getURL('zrxiv_header.html'))
 	.then(resp => resp.text())
 	.then(zrxiv_header_html => { chrome.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}, function(options) 
 		{
-			if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
-				return;
-
 			var container = document.createElement('div');
 			container.innerHTML = zrxiv_header_html;
 			document.body.insertBefore(container, document.body.firstChild);
 
-			zrxiv_init(options);
+			if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
+			{
+				document.getElementById('zrxiv_options').href = chrome.runtime.getURL('zrxiv_options.html');
+				document.getElementById('zrxiv_options_missing').style.display = ''; 
+				document.getElementById('zrxiv_site').href = chrome.runtime.getManifest().homepage_url;
+			}
+			else
+				zrxiv_init(options);
 		});	
 	});

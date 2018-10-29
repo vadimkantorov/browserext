@@ -1,6 +1,6 @@
 function zrxiv_restore_options()
 {
-	chrome.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout : 10}, function(options)
+	chrome.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout : 5}, function(options)
 	{
 		document.getElementById('zrxiv_github_repo').value = options.zrxiv_github_repo;
 		document.getElementById('zrxiv_github_token').value = options.zrxiv_github_token;

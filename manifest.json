@@ -16,7 +16,7 @@
 	"browser_action": {
 		"default_title": "Open zrXiv"
 	},
-	"web_accessible_resources": ["zrxiv_header.html", "zrxiv_header.js", "zrxiv_options.js"],
+	"web_accessible_resources": ["zrxiv_header.html", "zrxiv_options.html", "zrxiv_header.js", "zrxiv_options.js"],
 	"options_page" : "zrxiv_options.html",
 	"homepage_url" : "https://github.com/vadimkantorov/zrxiv"
 }
