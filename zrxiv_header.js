@@ -109,14 +109,15 @@ function prevent_auto_save(action)
 {
 	if(action == 'check')
 	{
-		return Promise(function(resolve)
+		return new Promise(function(resolve)
 		{
-			chrome.storage.sync.get({prevent_auto_save : []}, function(docs) { resolve(docs.indexOf(zrxiv_document_id) >= 0); } );
+			chrome.storage.sync.get({prevent_auto_save : []}, function(res) { resolve(res.prevent_auto_save.indexOf(zrxiv_document_id) >= 0); } );
 		});
 	}
 	else if(action == 'add')
 	{
-		chrome.storage.sync.get({prevent_auto_save : []}, function(docs) {
+		chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
+			var docs = res.prevent_auto_save;
 			if(docs.indexOf(zrxiv_document_id) < 0)
 			{
 				docs.push(zrxiv_document_id);
@@ -126,7 +127,8 @@ function prevent_auto_save(action)
 	}
 	else if(action == 'remove')
 	{
-		chrome.storage.sync.get({prevent_auto_save : []}, function(docs) {
+		chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
+			var docs = res.prevent_auto_save;
 			if(docs.indexOf(zrxiv_document_id) >= 0)
 			{
 				docs = docs.filter(x => x != zrxiv_document_id);
@@ -236,17 +238,20 @@ function zrxiv_init(options)
 			}
 			else
 			{
-				if(prevent_auto_save('check') || !zrxiv_auto_save_timeout)
-					zrxiv_toggle('prevent-auto-save');
-				else
+				prevent_auto_save('check').then(res =>
 				{
-					zrxiv_toggle('auto-save');
-					var timer = setInterval(function() {
-						clearInterval(timer);
-						if(zrxiv_document_add_auto)
-							zrxiv_toggle('save');
-					}, zrxiv_auto_save_timeout * 1000);
-				}
+					if(res || !zrxiv_auto_save_timeout)
+						zrxiv_toggle('prevent-auto-save');
+					else
+					{
+						zrxiv_toggle('auto-save');
+						var timer = setInterval(function() {
+							clearInterval(timer);
+							if(zrxiv_document_add_auto)
+								zrxiv_toggle('save');
+						}, zrxiv_auto_save_timeout * 1000);
+					}
+				});
 
 			}
 		});
