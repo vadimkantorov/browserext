@@ -239,17 +239,16 @@ function zrxiv_init(options)
 
 	var match = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(options.zrxiv_github_repo);
 	var username = match[1], repo = match[2];
+	zrxiv_api = new GithubZrxivApi('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
 
 	//var parsed_doc = parse_arxiv_document();
 	var zrxiv_auto_save_timeout = options.zrxiv_auto_save_timeout != null ? parseInt(options.zrxiv_auto_save_timeout) : null;
-	zrxiv_api = new GithubZrxivApi('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
 
 	document.getElementById('zrxiv_site').href = options.zrxiv_github_repo.startsWith('http') ? options.zrxiv_github_repo : 'https://' + options.zrxiv_github_repo;
 	document.getElementById('zrxiv_tag_add').addEventListener('click', function(event)
 	{
-		var tag = document.getElementById('zrxiv_tag').value;
-		zrxiv_api.add_tag(tag)
-			.then(res => zrxiv_api.toggle_tag(tag, true))
+		let tag = document.getElementById('zrxiv_tag').value;
+		Promise.all([zrxiv_api.add_tag(tag), zrxiv_api.toggle_tag(tag, true)])
 			.then(res => {
 				document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(tag, true));
 				document.getElementById('zrxiv_tag').value = '';
@@ -274,9 +273,7 @@ function zrxiv_init(options)
 				zrxiv_api.auto_save().then(res =>
 				{
 					if(res || !zrxiv_auto_save_timeout)
-					{
 						zrxiv_toggle('prevent-auto-save');
-					}
 					else
 					{
 						zrxiv_toggle('auto-save', zrxiv_auto_save_timeout);
@@ -297,7 +294,6 @@ fetch(chrome.extension.getURL('zrxiv_header.html'))
 			var container = document.createElement('div');
 			container.innerHTML = zrxiv_header_html;
 			document.body.insertBefore(container, document.body.firstChild);
-
 			zrxiv_init(options);
 		});	
 	});
