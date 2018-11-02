@@ -151,6 +151,7 @@ function zrxiv_toggle(action)
 		zrxiv_document_add_auto = false;
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
+		prevent_auto_save('add');
 	}
 	else if(action == 'save' || action == 'saved')
 	{
@@ -207,9 +208,6 @@ function parse_arxiv_document()
 		var abs = entry.querySelector('summary').innerText;
 		var title = entry.querySelector('title').innerText;
 		var authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
-		console.log(title);
-		console.log(authors)
-		console.log(abs);
 	});
 
 	return {
