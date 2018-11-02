@@ -98,7 +98,7 @@ class GithubZrxivApi
 			});
 	}
 
-	prevent_auto_save(action)
+	auto_save(action)
 	{
 		if(action == null)
 		{
@@ -107,7 +107,7 @@ class GithubZrxivApi
 				chrome.storage.sync.get({prevent_auto_save : []}, function(res) { resolve(res.prevent_auto_save.indexOf(this.doc_id) >= 0); } );
 			});
 		}
-		else if(action == true)
+		else if(action == false)
 		{
 			chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
 				var docs = res.prevent_auto_save;
@@ -118,7 +118,7 @@ class GithubZrxivApi
 				}
 			});
 		}
-		else if(action == false)
+		else if(action == true)
 		{
 			chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
 				var docs = res.prevent_auto_save;
@@ -158,7 +158,7 @@ function zrxiv_toggle(action, arg)
 	{
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
-		zrxiv_api.prevent_auto_save(true);
+		zrxiv_api.auto_save(false);
 	}
 	else if(action == 'save' || action == 'saved')
 	{
@@ -167,7 +167,7 @@ function zrxiv_toggle(action, arg)
 			var doc = {id : zrxiv_api.doc_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] };
 			zrxiv_api.put_doc('Add ', doc)
 				.then(res => zrxiv_tags_render(true))
-				.then(res => zrxiv_api.prevent_auto_save(false));
+				.then(res => zrxiv_api.auto_save(true));
 		}
 		zrxiv_toggle_button.dataset.action = 'delete';
 		zrxiv_toggle_button.innerText = 'Delete';
@@ -176,7 +176,7 @@ function zrxiv_toggle(action, arg)
 	{
 		zrxiv_document_del()
 			.then(res => zrxiv_tags_render(false))
-			.then(res => zrxiv_api.prevent_auto_save(true));
+			.then(res => zrxiv_api.auto_save(false));
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
 	}
@@ -271,7 +271,7 @@ function zrxiv_init(options)
 			}
 			else
 			{
-				zrxiv_api.prevent_auto_save().then(res =>
+				zrxiv_api.auto_save().then(res =>
 				{
 					if(res || !zrxiv_auto_save_timeout)
 					{
