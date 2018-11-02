@@ -205,20 +205,21 @@ function zrxiv_tags_render(show, tags_on, tags)
 	}
 }
 
-function parse_arxiv_document()
+async function parse_arxiv_document()
 {
-	fetch('https://export.arxiv.org/api/query?id_list=' + new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]).then(res => res.text()).then(res => {
-		var entry = document.createRange().createContextualFragment(res).querySelector('entry');
-		var abs = entry.querySelector('summary').innerText;
-		var title = entry.querySelector('title').innerText;
-		var authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
-	});
+	let response = await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='));
+	let xml = await response.text();
 
+	var entry = document.createRange().createContextualFragment(xml).querySelector('entry');
+	var abs = entry.querySelector('summary').innerText;
+	var title = entry.querySelector('title').innerText;
+	var authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
+	
 	return {
-		id : new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1],
-		title : document.title, 
+		title : title 
 		url : window.location.href,
-		authors : Array.from(document.querySelectorAll('.authors a')).map(elem => elem.innerText)
+		author : authors,
+		abstract : abs
 	};
 }
 
@@ -235,7 +236,7 @@ function zrxiv_init(options)
 	var match = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(options.zrxiv_github_repo);
 	var username = match[1], repo = match[2];
 
-	var parsed_doc = parse_arxiv_document();
+	//var parsed_doc = parse_arxiv_document();
 	var zrxiv_auto_save_timeout = options.zrxiv_auto_save_timeout != null ? parseInt(options.zrxiv_auto_save_timeout) : null;
 	zrxiv_api = new GithubZrxivApi('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
 
