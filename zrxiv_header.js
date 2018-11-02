@@ -1,6 +1,11 @@
 var zrxiv_api = null;
 
-class GithubZrxivApi
+function async_chrome_storage_sync_get(obj)
+{
+	return new Promise(resolve => chrome.storage.sync.get(obj, resolve));
+}
+
+class ZrxivGithubBackend
 {
 	constructor(api, auth_token, doc_id)
 	{
@@ -11,7 +16,6 @@ class GithubZrxivApi
 
 	get_doc()
 	{
-		console.log('zrxiv', 'doc get', this.doc_id);
 		return fetch(this.api + '/contents/_data/documents/' + this.doc_id + '.json', 
 		{
 			headers : {'Authorization' : 'Basic ' + btoa(this.auth_token)}
@@ -20,7 +24,6 @@ class GithubZrxivApi
 
 	get_tags()
 	{
-		console.log('zrxiv', 'tags get');
 		return fetch(this.api + '/contents/_data/tags',
 		{
 			headers : {'Authorization' : 'Basic ' + btoa(this.auth_token)}
@@ -29,8 +32,7 @@ class GithubZrxivApi
 
 	put_doc(message, doc, sha)
 	{
-		console.log('zrxiv', 'doc put', this.doc_id);
-		var body = {message : message + this.doc_id, content : btoa(JSON.stringify(doc, null, 2))};
+		let body = {message : message + this.doc_id, content : btoa(JSON.stringify(doc, null, 2))};
 		if(sha)
 			body.sha = sha;
 		return fetch(this.api + '/contents/_data/documents/' + this.doc_id + '.json',
@@ -45,29 +47,24 @@ class GithubZrxivApi
 		})
 	}
 
-	del_doc()
+	async del_doc()
 	{
-		console.log('zrxiv', 'doc del', this.doc_id);
-		return this.get_doc()
-			.then(res => res.json())
-			.then(res =>
+		let response = await this.get_doc();
+		let json = await response.json();
+		return fetch(this.api + '/contents/_data/documents/' + this.doc_id + '.json',
+		{
+			method : 'delete',
+			headers : 
 			{
-				return fetch(this.api + '/contents/_data/documents/' + this.doc_id + '.json',
-				{
-					method : 'delete',
-					headers : 
-					{
-						'Content-Type' : 'application/json',
-						'Authorization' : 'Basic ' + btoa(this.auth_token)
-					},
-					body : JSON.stringify({message : 'Delete ' + this.doc_id, sha : res.sha})
-				})
-			});
+				'Content-Type' : 'application/json',
+				'Authorization' : 'Basic ' + btoa(this.auth_token)
+			},
+			body : JSON.stringify({message : 'Delete ' + this.doc_id, sha : json.sha})
+		});
 	}
 
 	add_tag(tag)
 	{
-		console.log('zrxiv', 'tag add', tag);
 		return fetch(this.api + '/contents/_data/tags/' + tag + '.json',
 		{
 			method : 'put',
@@ -80,67 +77,45 @@ class GithubZrxivApi
 		});
 	}
 
-	toggle_tag(tag, checked)
+	async toggle_tag(tag, checked)
 	{
-		console.log('zrxiv', 'doc tag', this.doc_id, tag, checked);
-		return this.get_doc()
-			.then(res => res.json())
-			.then(res =>
-			{
-				var doc = JSON.parse(atob(res.content));
-				var checked_old = doc.tags.indexOf(tag) != -1;
-				if(checked && !checked_old)
-					doc.tags.push(tag);
-				else if(!checked && checked_old)
-					doc.tags = doc.tags.filter(x => x != tag);
-
-				zrxiv_api.put_doc('Change tag of ', doc, res.sha);
-			});
+		const json = await (await this.get_doc()).json();
+		const doc = JSON.parse(atob(json.content));
+		const checked_old = doc.tags.indexOf(tag) != -1;
+		if(checked && !checked_old)
+			doc.tags.push(tag);
+		else if(!checked && checked_old)
+			doc.tags = doc.tags.filter(x => x != tag);
+		return zrxiv_api.put_doc('Change tag of ', doc, json.sha);
 	}
 
-	auto_save(action)
+	async auto_save(action)
 	{
+		let prevent_auto_save = (await async_chrome_storage_sync_get({prevent_auto_save : []})).prevent_auto_save;
 		if(action == null)
+			return prevent_auto_save.indexOf(this.doc_id) >= 0;
+		else if(action == false && prevent_auto_save.indexOf(this.doc_id) < 0)
 		{
-			return new Promise(function(resolve)
-			{
-				chrome.storage.sync.get({prevent_auto_save : []}, function(res) { resolve(res.prevent_auto_save.indexOf(this.doc_id) >= 0); } );
-			});
+			prevent_auto_save.push(this.doc_id);
+			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
-		else if(action == false)
+		else if(action == true && docs.indexOf(this.doc_id) >= 0)
 		{
-			chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
-				var docs = res.prevent_auto_save;
-				if(docs.indexOf(this.doc_id) < 0)
-				{
-					docs.push(this.doc_id);
-					chrome.storage.sync.set({prevent_auto_save : docs}, function(){});
-				}
-			});
-		}
-		else if(action == true)
-		{
-			chrome.storage.sync.get({prevent_auto_save : []}, function(res) {
-				var docs = res.prevent_auto_save;
-				if(docs.indexOf(this.doc_id) >= 0)
-				{
-					docs = docs.filter(x => x != this.doc_id);
-					chrome.storage.sync.set({prevent_auto_save : docs}, function(){});
-				}
-			});
+			prevent_auto_save = prevent_auto_save.filter(x => x != this.doc_id);
+			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
 	}
 }
 
 function zrxiv_make_checkbox(tag, checked)
 {
-	var checkbox = document.createElement('input');
+	let checkbox = document.createElement('input');
 	checkbox.type = 'checkbox'
 	checkbox.className = 'zrxiv_checkbox';
 	checkbox.value = tag;
 	checkbox.checked = checked;
 	checkbox.addEventListener('change', function() { if(this.style.display != 'none') zrxiv_api.toggle_tag(this.value, this.checked); });
-	var label = document.createElement('label');
+	let label = document.createElement('label');
 	label.appendChild(checkbox);
 	label.appendChild(document.createTextNode(tag));
 	return label;
@@ -148,7 +123,7 @@ function zrxiv_make_checkbox(tag, checked)
 
 function zrxiv_toggle(action, arg)
 {
-	var zrxiv_toggle_button = document.getElementById('zrxiv_toggle');
+	let zrxiv_toggle_button = document.getElementById('zrxiv_toggle');
 	if(action == 'auto-save')
 	{
 		zrxiv_toggle_button.innerText = 'Prevent auto-save in ' + arg + ' seconds';
@@ -164,19 +139,19 @@ function zrxiv_toggle(action, arg)
 	{
 		if(action == 'save')
 		{
-			var doc = {id : zrxiv_api.doc_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] };
-			zrxiv_api.put_doc('Add ', doc)
-				.then(res => zrxiv_tags_render(true))
-				.then(res => zrxiv_api.auto_save(true));
+			const doc = {id : zrxiv_api.doc_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] };
+			zrxiv_api.put_doc('Add ', doc);
+			zrxiv_tags_render(true);
+			zrxiv_api.auto_save(true);
 		}
 		zrxiv_toggle_button.dataset.action = 'delete';
 		zrxiv_toggle_button.innerText = 'Delete';
 	}
 	else if(action == 'delete')
 	{
-		zrxiv_document_del()
-			.then(res => zrxiv_tags_render(false))
-			.then(res => zrxiv_api.auto_save(false));
+		zrxiv_document_del();
+		zrxiv_tags_render(false);
+		zrxiv_api.auto_save(false);
 		zrxiv_toggle_button.dataset.action = 'save';
 		zrxiv_toggle_button.innerText = 'Save';
 	}
@@ -185,7 +160,7 @@ function zrxiv_toggle(action, arg)
 
 function zrxiv_tags_render(show, tags_on, tags)
 {
-	var zrxiv_tags = document.getElementById('zrxiv_tags');
+	let zrxiv_tags = document.getElementById('zrxiv_tags');
 	if(tags_on != null)
 	{
 		if(tags.length == 0)
@@ -193,7 +168,7 @@ function zrxiv_tags_render(show, tags_on, tags)
 		else
 		{
 			zrxiv_tags.innerHTML = '';
-			tags.forEach(tag => zrxiv_tags.appendChild(zrxiv_make_checkbox(tag, tags_on.indexOf(tag) != -1)))
+			tags.forEach(tag => zrxiv_tags.appendChild(zrxiv_make_checkbox(tag, tags_on.indexOf(tag) >= 0)))
 		}
 	}
 
@@ -211,23 +186,21 @@ function zrxiv_tags_render(show, tags_on, tags)
 
 async function parse_arxiv_document()
 {
-	let response = await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='));
-	let xml = await response.text();
-
-	var entry = document.createRange().createContextualFragment(xml).querySelector('entry');
-	var abs = entry.querySelector('summary').innerText;
-	var title = entry.querySelector('title').innerText;
-	var authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
+	const xml = await (await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
+	const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
+	const abs = entry.querySelector('summary').innerText;
+	const title = entry.querySelector('title').innerText;
+	const authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
 	
 	return {
-		title : title 
+		title : title, 
 		url : window.location.href,
 		author : authors,
 		abstract : abs
 	};
 }
 
-function zrxiv_init(options)
+async function zrxiv_init(options)
 {
 	if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
 	{
@@ -237,63 +210,44 @@ function zrxiv_init(options)
 		return;
 	}
 
-	var match = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(options.zrxiv_github_repo);
-	var username = match[1], repo = match[2];
-	zrxiv_api = new GithubZrxivApi('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
+	const [match, username, repo] = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(options.zrxiv_github_repo);
+	zrxiv_api = new ZrxivGithubBackend('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
 
-	//var parsed_doc = parse_arxiv_document();
-	var zrxiv_auto_save_timeout = options.zrxiv_auto_save_timeout != null ? parseInt(options.zrxiv_auto_save_timeout) : null;
-
+	//const parsed_doc = parse_arxiv_document();
 	document.getElementById('zrxiv_site').href = options.zrxiv_github_repo.startsWith('http') ? options.zrxiv_github_repo : 'https://' + options.zrxiv_github_repo;
-	document.getElementById('zrxiv_tag_add').addEventListener('click', function(event)
+	document.getElementById('zrxiv_tag_add').addEventListener('click', async function(event)
 	{
-		let tag = document.getElementById('zrxiv_tag').value;
-		Promise.all([zrxiv_api.add_tag(tag), zrxiv_api.toggle_tag(tag, true)])
-			.then(res => {
-				document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(tag, true));
-				document.getElementById('zrxiv_tag').value = '';
-			});
+		const tag = document.getElementById('zrxiv_tag').value;
+		await zrxiv_api.add_tag(tag);
+		await zrxiv_api.toggle_tag(tag, true);
+		document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(tag, true));
+		document.getElementById('zrxiv_tag').value = '';
 	});
 	document.getElementById('zrxiv_toggle').addEventListener('click', function(event) { zrxiv_toggle(this.dataset.action); } );
 	document.getElementById('zrxiv_tag').addEventListener('keyup', function(event) { if (event.keyCode == 13) document.getElementById('zrxiv_tag_add').click(); });
 
-	Promise.all([zrxiv_api.get_doc(), zrxiv_api.get_tags()])
-		.then(resps => Promise.all([resps[0].status == 200 ? resps[0].json() : null, resps[1].status == 200 ? resps[1].json() : []]))
-		.then(([doc, tags]) => 
+	const resps = await Promise.all([zrxiv_api.get_doc(), zrxiv_api.get_tags()]);
+	const [doc, tags] = await Promise.all([resps[0].status == 200 ? await resps[0].json() : null, resps[1].status == 200 ? await resps[1].json() : []]);
+	zrxiv_tags_render(doc != null, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
+	if(doc != null)
+		zrxiv_toggle('saved');
+	else
+	{
+		if(!options.zrxiv_auto_save_timeout || await zrxiv_api.auto_save())
+			zrxiv_toggle('prevent-auto-save');
+		else
 		{
-			zrxiv_tags_render(false, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
-					
-			if(doc != null)
-			{
-				zrxiv_tags_render(true);
-				zrxiv_toggle('saved');
-			}
-			else
-			{
-				zrxiv_api.auto_save().then(res =>
-				{
-					if(res || !zrxiv_auto_save_timeout)
-						zrxiv_toggle('prevent-auto-save');
-					else
-					{
-						zrxiv_toggle('auto-save', zrxiv_auto_save_timeout);
-						var timer = setInterval(function() {
-							clearInterval(timer);
-							zrxiv_toggle('save');
-						}, zrxiv_auto_save_timeout * 1000);
-					}
-				});
-			}
-		});
+			zrxiv_toggle('auto-save', zrxiv_auto_save_timeout);
+			await new Promise(resolve => setTimeout(resolve, options.zrxiv_auto_save_timeout * 1000));
+			zrxiv_toggle('save');
+		}
+	}
 }
 
-fetch(chrome.extension.getURL('zrxiv_header.html'))
-	.then(resp => resp.text())
-	.then(zrxiv_header_html => { chrome.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}, function(options) 
-		{
-			var container = document.createElement('div');
-			container.innerHTML = zrxiv_header_html;
-			document.body.insertBefore(container, document.body.firstChild);
-			zrxiv_init(options);
-		});	
-	});
+(async () => {
+	const html = await (await fetch(chrome.extension.getURL('zrxiv_header.html'))).text();
+	const container = document.createElement('div');
+	container.innerHTML = html;
+	document.body.insertBefore(container, document.body.firstChild);
+	zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
+})();

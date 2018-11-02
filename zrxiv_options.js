@@ -14,7 +14,7 @@ function zrxiv_save_options()
 		zrxiv_github_repo: document.getElementById('zrxiv_github_repo').value,
 		zrxiv_github_token : document.getElementById('zrxiv_github_token').value,
 		zrxiv_auto_save_timeout : parseInt(document.getElementById('zrxiv_auto_save_timeout').value) || null
-	}, function() {});
+	});
 }
 
 document.addEventListener('DOMContentLoaded', zrxiv_restore_options);
