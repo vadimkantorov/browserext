@@ -30,9 +30,6 @@ class ZrxivGithubBackend
 
 	put_doc(message, doc, sha)
 	{
-		let body = {message : message + this.doc_id, content : btoa(JSON.stringify(doc, null, 2))};
-		if(sha)
-			body.sha = sha;
 		return fetch(this.api + '/contents/_data/documents/' + this.doc_id + '.json',
 		{
 			method : 'put',
@@ -41,7 +38,7 @@ class ZrxivGithubBackend
 				'Content-Type' : 'application/json',
 				'Authorization' : 'Basic ' + btoa(this.auth_token)
 			},
-			body : JSON.stringify(body)
+			body : JSON.stringify(Object.assign({message : message + this.doc_id, content : btoa(JSON.stringify(doc, null, 2))}, sha ? {sha : sha} : {}))
 		})
 	}
 
@@ -71,8 +68,14 @@ class ZrxivGithubBackend
 				'Content-Type' : 'application/json',
 				'Authorization' : 'Basic ' + btoa(this.auth_token)
 			},
-			body : JSON.stringify({message : 'Create tag ' + tag, content : '' })
+			body : JSON.stringify({message : 'Create tag ' + tag, content : '{}' })
 		});
+	}
+
+	add_doc()
+	{
+		const doc = {id : this.doc_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] };
+		return this.put_doc('Add ', doc);
 	}
 
 	async toggle_tag(tag, checked)
@@ -150,8 +153,7 @@ function zrxiv_toggle(zrxiv_api, action, zrxiv_auto_save_timeout)
 	{
 		if(action == 'save')
 		{
-			const doc = {id : zrxiv_api.doc_id, title : document.title, url : window.location.href, date : Math.floor(new Date().getTime() / 1000), tags : [] };
-			zrxiv_api.put_doc('Add ', doc);
+			zrxiv_api.add_doc();
 			zrxiv_tags_render(zrxiv_api, true);
 			zrxiv_api.auto_save(true);
 		}
