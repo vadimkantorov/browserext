@@ -121,12 +121,12 @@ function zrxiv_make_checkbox(tag, checked)
 	return label;
 }
 
-function zrxiv_toggle(action, arg)
+function zrxiv_toggle(action, zrxiv_auto_save_timeout)
 {
 	let zrxiv_toggle_button = document.getElementById('zrxiv_toggle');
 	if(action == 'auto-save')
 	{
-		zrxiv_toggle_button.innerText = 'Prevent auto-save in ' + arg + ' seconds';
+		zrxiv_toggle_button.innerText = 'Prevent auto-save in ' + zrxiv_auto_save_timeout + ' seconds';
 		zrxiv_toggle_button.dataset.action = 'prevent-auto-save';
 	}
 	else if(action == 'prevent-auto-save')
