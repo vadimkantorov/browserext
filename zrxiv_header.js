@@ -113,7 +113,7 @@ class ZrxivGithubBackend
 			prevent_auto_save.push(this.doc_id);
 			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
-		else if(action == true && docs.indexOf(this.doc_id) >= 0)
+		else if(action == true && prevent_auto_save.indexOf(this.doc_id) >= 0)
 		{
 			prevent_auto_save = prevent_auto_save.filter(x => x != this.doc_id);
 			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
@@ -219,7 +219,7 @@ async function zrxiv_init(options)
 
 	const resps = await Promise.all([zrxiv_api.get_doc(), zrxiv_api.get_tags()]);
 	const [doc, tags] = await Promise.all([resps[0].status == 200 ? await resps[0].json() : null, resps[1].status == 200 ? await resps[1].json() : []]);
-	zrxiv_tags_render(doc != null, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
+	zrxiv_tags_render(zrxiv_api, doc != null, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
 	if(doc == null)
 	{
 		if(!options.zrxiv_auto_save_timeout || await zrxiv_api.auto_save())
