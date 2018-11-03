@@ -5,11 +5,24 @@ function async_chrome_storage_sync_get(obj)
 
 class ZrxivGithubBackend
 {
-	constructor(api, auth_token, doc_id)
+	constructor(zrxiv_github_repo, zrxiv_github_token, href)
 	{
-		this.api = api;
-		this.auth_token = auth_token;
-		this.doc_id = doc_id;
+		const [match, username, repo] = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(zrxiv_github_repo);
+		this.doc_id = new RegExp('abs/(\\d+\.\\d+)', 'g').exec(href)[1];
+		this.api = 'https://api.github.com/repos/' + username + '/' + repo;
+		this.auth_token = username + ':' + zrxiv_github_token;
+	}
+
+	async parse_arxiv_document()
+	{
+		const xml = await (await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
+		const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
+		return {
+			title : entry.querySelector('title').innerText, 
+			url : window.location.href,
+			author : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
+			abstract : entry.querySelector('summary').innerText
+		};
 	}
 
 	get_doc()
@@ -106,22 +119,6 @@ class ZrxivGithubBackend
 			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
 	}
-
-	async parse_arxiv_document()
-	{
-		const xml = await (await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
-		const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
-		const abs = entry.querySelector('summary').innerText;
-		const title = entry.querySelector('title').innerText;
-		const authors = Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText);
-		
-		return {
-			title : title, 
-			url : window.location.href,
-			author : authors,
-			abstract : abs
-		};
-	}
 }
 
 function zrxiv_make_checkbox(zrxiv_api, tag, checked)
@@ -162,7 +159,7 @@ function zrxiv_toggle(zrxiv_api, action, zrxiv_auto_save_timeout)
 	}
 	else if(action == 'delete')
 	{
-		zrxiv_document_del();
+		zrxiv_api.del_doc();
 		zrxiv_tags_render(zrxiv_api, false);
 		zrxiv_api.auto_save(false);
 		zrxiv_toggle_button.dataset.action = 'save';
@@ -207,8 +204,7 @@ async function zrxiv_init(options)
 		return;
 	}
 
-	const [match, username, repo] = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(options.zrxiv_github_repo);
-	let zrxiv_api = new ZrxivGithubBackend('https://api.github.com/repos/' + username + '/' + repo, username + ':' + options.zrxiv_github_token, new RegExp('abs/(\\d+\.\\d+)', 'g').exec(window.location.href)[1]);
+	let zrxiv_api = new ZrxivGithubBackend(options.zrxiv_github_repo, options.zrxiv_github_token, window.location.href);
 	document.getElementById('zrxiv_site').href = options.zrxiv_github_repo.startsWith('http') ? options.zrxiv_github_repo : 'https://' + options.zrxiv_github_repo;
 	document.getElementById('zrxiv_tag_add').addEventListener('click', async function(event)
 	{
@@ -230,7 +226,7 @@ async function zrxiv_init(options)
 			zrxiv_toggle('prevent-auto-save');
 		else
 		{
-			zrxiv_toggle(zrxiv_api, 'auto-save', zrxiv_auto_save_timeout);
+			zrxiv_toggle(zrxiv_api, 'auto-save', options.zrxiv_auto_save_timeout);
 			await new Promise(resolve => setTimeout(resolve, options.zrxiv_auto_save_timeout * 1000));
 			zrxiv_toggle(zrxiv_api, 'save');
 		}
