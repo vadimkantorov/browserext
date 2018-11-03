@@ -34,15 +34,15 @@ class ZrxivGithubBackend
 			author : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
 			abstract : entry.querySelector('summary').innerText,
 			id : new RegExp('abs/(\\d+\.\\d+)', 'g').exec(entry.querySelector('id').innerText)[1],
-			date : Math.floor(new Date().getTime() / 1000),
-			url : window.location.href,
-			tags : []
 		};
 	}
 
 	async init_doc()
 	{
 		this.doc = await this.parse_arxiv_document();
+		this.doc.date = Math.floor(new Date().getTime() / 1000);
+		this.doc.url = window.location.href;
+		this.doc.tags = [];
 		const resp = await this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json');
 		if(resp.status == 200)
 		{
