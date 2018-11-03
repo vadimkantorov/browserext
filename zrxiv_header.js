@@ -95,12 +95,12 @@ class ZrxivGithubBackend
 	{
 		const json = await (await this.get_doc()).json();
 		const doc = JSON.parse(atob(json.content));
-		const checked_old = doc.tags.indexOf(tag) != -1;
+		const checked_old = doc.tags.indexOf(tag) >= 0;
 		if(checked && !checked_old)
 			doc.tags.push(tag);
 		else if(!checked && checked_old)
 			doc.tags = doc.tags.filter(x => x != tag);
-		return zrxiv_api.put_doc('Change tag of ', doc, json.sha);
+		return this.put_doc('Change tag of ', doc, json.sha);
 	}
 
 	async auto_save(action)
@@ -123,12 +123,12 @@ class ZrxivGithubBackend
 
 function zrxiv_make_checkbox(zrxiv_api, tag, checked)
 {
-	let label = document.getElementById('zrxiv_checkbox').content.cloneNode(true);
+	let label = document.importNode(document.getElementById('zrxiv_checkbox').content.firstChild, true);
 	let checkbox = label.firstChild;
 	label.appendChild(document.createTextNode(tag));
 	checkbox.value = tag;
 	checkbox.checked = checked;
-	checkbox.addEventListener('change', function() { if(this.style.display != 'none') zrxiv_api.toggle_tag(this.value, this.checked); });
+	checkbox.addEventListener('click', function(event) { if(this.style.display != 'none') zrxiv_api.toggle_tag(this.value, this.checked); });
 	return label;
 }
 
@@ -237,7 +237,7 @@ async function zrxiv_init(options)
 
 (async () => {
 	const html = await (await fetch(chrome.extension.getURL('zrxiv_header.html'))).text();
-	const container = document.createElement('div');
+	let container = document.createElement('div');
 	container.innerHTML = html;
 	document.body.insertBefore(container, document.body.firstChild);
 	zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
