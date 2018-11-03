@@ -217,8 +217,8 @@ async function zrxiv_init(options)
 	document.getElementById('zrxiv_toggle').addEventListener('click', function(event) { zrxiv_toggle(zrxiv_api, this.dataset.action); } );
 	document.getElementById('zrxiv_tag').addEventListener('keyup', function(event) { if (event.keyCode == 13) document.getElementById('zrxiv_tag_add').click(); });
 
-	const resps = await Promise.all([zrxiv_api.get_doc(), zrxiv_api.get_tags()]);
-	const [doc, tags] = await Promise.all([resps[0].status == 200 ? await resps[0].json() : null, resps[1].status == 200 ? await resps[1].json() : []]);
+	let [doc, tags] = await Promise.all([zrxiv_api.get_doc(), zrxiv_api.get_tags()]);
+	[doc, tags] = await Promise.all([doc.status == 200 ? await doc.json() : null, tags.status == 200 ? await tags.json() : []]);
 	zrxiv_tags_render(zrxiv_api, doc != null, doc != null ? JSON.parse(atob(doc.content)).tags : [], tags.map(x => x.name.split('.').slice(0, -1).join('.')));
 	if(doc == null)
 	{
