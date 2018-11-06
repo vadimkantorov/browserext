@@ -8,6 +8,13 @@ function delay(seconds)
 	return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+function base64_encode_utf8(str)
+{
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode(parseInt(p1, 16))
+    }));
+}
+
 class ZrxivGithubBackend
 {
 	constructor(zrxiv_github_repo, zrxiv_github_token, href)
@@ -59,7 +66,7 @@ class ZrxivGithubBackend
 
 	put_doc(message, sha, retry)
 	{
-		return this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : btoa(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
+		return this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
 		.catch(async resp => 
 		{
 			if(resp.status == 409 && retry != false)
