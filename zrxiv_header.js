@@ -67,6 +67,7 @@ class ZrxivGithubBackend
 	put_doc(message, sha, retry)
 	{
 		return this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
+		.then(async resp => { if(resp.status == 200 || resp.status == 201)	this.sha = (await resp.json()).content.sha;	})
 		.catch(async resp => 
 		{
 			if(resp.status == 409 && retry != false)
