@@ -3,20 +3,21 @@
 	"name": "zrxiv",
 	"version": "0.1",
 	"permissions" : ["storage"],
+	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
 			"matches": [
 				"https://arxiv.org/abs/*"
 			],
-			"js": ["zrxiv_header.js"],
+			"js": ["header.js"],
 			"all_frames": true
 		}
 	],
-	"background" : { "scripts": ["zrxiv_background.js"] },
+	"background" : { "scripts": ["background.js"] },
 	"browser_action": {
 		"default_title": "Open zrxiv"
 	},
-	"web_accessible_resources": ["zrxiv_header.html", "zrxiv_options.html", "zrxiv_header.js", "zrxiv_options.js"],
-	"options_page" : "zrxiv_options.html",
+	"web_accessible_resources": ["header.html", "options.html", "header.js", "options.js"],
+	"options_page" : "options.html",
 	"homepage_url" : "https://github.com/vadimkantorov/zrxiv"
 }
