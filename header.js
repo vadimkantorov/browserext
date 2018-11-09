@@ -214,7 +214,6 @@ async function zrxiv_init(options)
 {
 	if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
 	{
-		document.getElementById('zrxiv_options').href = chrome.runtime.getURL('options.html');
 		document.getElementById('zrxiv_options_missing').style.display = ''; 
 		return;
 	}
