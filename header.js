@@ -17,11 +17,10 @@ function base64_encode_utf8(str)
 
 class ZrxivGithubBackend
 {
-	constructor(zrxiv_github_repo, zrxiv_github_token, href)
+	constructor(github_username, github_repo, github_token, href)
 	{
-		const [match, username, repo] = new RegExp('([^/]+)\.github.io/(.+)', 'g').exec(zrxiv_github_repo);
-		this.api = 'https://api.github.com/repos/' + username + '/' + repo;
-		this.auth_token = username + ':' + zrxiv_github_token;
+		this.api = 'https://api.github.com/repos/' + github_username + '/' + github_repo;
+		this.auth_token = github_username + ':' + github_token;
 		this.doc = null;
 		this.sha = null;
 		this.retry_delay_seconds = 2;
@@ -215,14 +214,13 @@ async function zrxiv_init(options)
 {
 	if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
 	{
-		document.getElementById('zrxiv_options').href = chrome.runtime.getURL('zrxiv_options.html');
+		document.getElementById('zrxiv_options').href = chrome.runtime.getURL('options.html');
 		document.getElementById('zrxiv_options_missing').style.display = ''; 
-		document.getElementById('zrxiv_site').href = chrome.runtime.getManifest().homepage_url;
 		return;
 	}
 
-	let zrxiv_api = new ZrxivGithubBackend(options.zrxiv_github_repo, options.zrxiv_github_token, window.location.href);
-	document.getElementById('zrxiv_site').href = options.zrxiv_github_repo.startsWith('http') ? options.zrxiv_github_repo : 'https://' + options.zrxiv_github_repo;
+	const [match, github_username, github_repo] = new RegExp('github.com/(.+)/([^/]+)', 'g').exec(options.zrxiv_github_repo);
+	let zrxiv_api = new ZrxivGithubBackend(github_username, github_repo, options.zrxiv_github_token, window.location.href);
 	document.getElementById('zrxiv_tag_add').addEventListener('click', async function(event)
 	{
 		const tag = document.getElementById('zrxiv_tag').value;
@@ -252,9 +250,15 @@ async function zrxiv_init(options)
 }
 
 (async () => {
-	const html = await (await fetch(chrome.extension.getURL('header.html'))).text();
 	let container = document.createElement('div');
-	container.innerHTML = html;
+	container.innerHTML = await (await fetch(chrome.extension.getURL('header.html'))).text();
 	document.body.insertBefore(container, document.body.firstChild);
 	zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
 })();
+
+//let container = document.createElement('iframe');
+//container.src = chrome.extension.getURL('header.html');
+//document.body.insertBefore(container, document.body.firstChild);
+//document = container.contentDocument;
+//console.log(1, container.contentDocument);
+//container.onload = async event => zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
