@@ -10,9 +10,7 @@ function delay(seconds)
 
 function base64_encode_utf8(str)
 {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-        return String.fromCharCode(parseInt(p1, 16))
-    }));
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {return String.fromCharCode(parseInt(p1, 16)) }));
 }
 
 class ZrxivGithubBackend
@@ -31,23 +29,27 @@ class ZrxivGithubBackend
 		return fetch(this.api + relative_url, Object.assign({method : method || 'get', headers : Object.assign({Authorization : 'Basic ' + btoa(this.auth_token)}, body != null ? {'Content-Type' : 'application/json'} : {})}, body != null ? {body : JSON.stringify(body)} : {}));
 	}
 
-	async parse_arxiv_document()
+	async parse_arxiv_document(href)
 	{
-		const xml = await (await fetch(window.location.href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
+		const xml = await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
 		const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
+		const [match, category, id] = new RegExp('.+arxiv.org/abs/(.+/)?([^v]+)', 'g').exec(entry.querySelector('id').innerText);
+		const url = 'https://arxiv.org/abs/' + (category ? category + '/' + id : id)
 		return {
 			title : entry.querySelector('title').innerText, 
 			author : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
 			abstract : entry.querySelector('summary').innerText,
-			id : new RegExp('abs/(\\d+\.\\d+)', 'g').exec(entry.querySelector('id').innerText)[1],
+			id : 'arxiv.' + (category ? category + '_' + id : id),
+			url : url,
+			pdf : url.replace('arxiv.org/abs/', 'arxiv.org/pdf/'),
+			source : 'arxiv.org'
 		};
 	}
 
 	async init_doc()
 	{
-		this.doc = await this.parse_arxiv_document();
+		this.doc = await this.parse_arxiv_document(window.location.href);
 		this.doc.date = Math.floor(new Date().getTime() / 1000);
-		this.doc.url = window.location.href;
 		this.doc.tags = [];
 		const resp = await this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json');
 		if(resp.status == 200)
@@ -116,7 +118,8 @@ class ZrxivGithubBackend
 			this.doc.tags.push(tag);
 		else if(!checked && idx_old >= 0)
 			this.doc.tags.splice(idx_old, 1);
-		return this.put_doc('Change tag of ', this.sha);
+		if(this.sha != null)
+			return this.put_doc('Change tag of ', this.sha);
 	}
 
 	async auto_save(action)
@@ -137,127 +140,140 @@ class ZrxivGithubBackend
 	}
 }
 
-function zrxiv_make_checkbox(zrxiv_api, tag, checked)
+class ZrxivFrontend
 {
-	let label = document.importNode(document.getElementById('zrxiv_checkbox').content, true).firstChild;
-	let checkbox = label.firstChild;
-	label.appendChild(document.createTextNode(tag));
-	checkbox.value = tag;
-	checkbox.checked = checked;
-	checkbox.addEventListener('click', function(event) { if(this.style.display != 'none') zrxiv_api.toggle_tag(this.value, this.checked); });
-	return label;
-}
-
-function zrxiv_toggle(zrxiv_api, action, zrxiv_auto_save_timeout)
-{
-	let zrxiv_toggle_button = document.getElementById('zrxiv_toggle');
-	if(action == 'auto-save')
+	constructor(root_element, options, href)
 	{
-		zrxiv_toggle_button.innerText = 'Prevent auto-save in ' + zrxiv_auto_save_timeout + ' seconds';
-		zrxiv_toggle_button.dataset.action = 'prevent-auto-save';
-	}
-	else if(action == 'prevent-auto-save')
-	{
-		zrxiv_toggle_button.dataset.action = 'save';
-		zrxiv_toggle_button.innerText = 'Save';
-		zrxiv_api.auto_save(false);
-	}
-	else if(action == 'save' || action == 'saved')
-	{
-		if(action == 'save')
+		this.root_element = root_element;
+		if(options.zrxiv_github_repo != null && options.zrxiv_github_token != null)
 		{
-			zrxiv_api.add_doc();
-			zrxiv_tags_render(zrxiv_api, true);
-			zrxiv_api.auto_save(true);
+			const [match, github_username, github_repo] = new RegExp('github.com/(.+)/([^/]+)', 'g').exec(options.zrxiv_github_repo);
+			this.backend = new ZrxivGithubBackend(github_username, github_repo, options.zrxiv_github_token, href);
 		}
-		zrxiv_toggle_button.dataset.action = 'delete';
-		zrxiv_toggle_button.innerText = 'Delete';
+		else
+			this.backend = null;
+		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
+		this.ui = { zrxiv_tag_add : root_element.querySelector('#zrxiv_tag_add'), zrxiv_tag : root_element.querySelector('#zrxiv_tag'), zrxiv_tags : root_element.querySelector('#zrxiv_tags'), zrxiv_toggle : root_element.querySelector('#zrxiv_toggle'), zrxiv_checkbox : root_element.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : root_element.querySelector('#zrxiv_options_missing'), zrxiv_tags_label : root_element.querySelector('#zrxiv_tags_label') };
 	}
-	else if(action == 'delete')
-	{
-		zrxiv_api.del_doc();
-		zrxiv_tags_render(zrxiv_api, false);
-		zrxiv_api.auto_save(false);
-		zrxiv_toggle_button.dataset.action = 'save';
-		zrxiv_toggle_button.innerText = 'Save';
-	}
-	zrxiv_toggle_button.style.display = '';
-}
 
-function zrxiv_tags_render(zrxiv_api, show, tags_on, tags)
-{
-	let zrxiv_tags = document.getElementById('zrxiv_tags');
-	if(tags_on != null)
+	render_tag(tag, checked)
 	{
-		if(tags.length == 0)
-			zrxiv_tags.innerHTML = '(no tags exist yet)';
+		const self = this;
+		let label = document.importNode(self.ui.zrxiv_checkbox.content, true).firstChild;
+		let checkbox = label.firstChild, span = label.lastChild;
+		span.textContent = tag;
+		checkbox.value = tag;
+		checkbox.checked = checked;
+		checkbox.addEventListener('click', function() { self.backend.toggle_tag(this.value, this.checked); });
+		return label;
+	}
+
+	render_tags(show, tags_on, tags)
+	{
+		if(tags_on != null)
+		{
+			if(tags.length == 0)
+				this.ui.zrxiv_tags.innerHTML = '(no tags exist yet)';
+			else
+			{
+				this.ui.zrxiv_tags.innerHTML = '';
+				tags.forEach(tag => this.ui.zrxiv_tags.appendChild(this.render_tag(tag, tags_on.indexOf(tag) >= 0)));
+			}
+		}
+
+		if(show)
+		{
+			[this.ui.zrxiv_tags_label, this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = '';});
+			this.ui.zrxiv_tags.style.display = 'inline';
+		}
 		else
 		{
-			zrxiv_tags.innerHTML = '';
-			tags.forEach(tag => zrxiv_tags.appendChild(zrxiv_make_checkbox(zrxiv_api, tag, tags_on.indexOf(tag) >= 0)))
+			[this.ui.zrxiv_tags_label, this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = 'none';});
+			this.root_element.querySelectorAll('.zrxiv_checkbox').forEach(checkbox => {checkbox.checked = false;});
 		}
 	}
 
-	if(show)
+	document_action(action)
 	{
-		document.querySelectorAll('#zrxiv_tags_label, #zrxiv_tag, #zrxiv_tag_add, #zrxiv_tags').forEach(elem => {elem.style.display = '';});
-		zrxiv_tags.style.display = 'inline';
-	}
-	else
-	{
-		document.querySelectorAll('#zrxiv_tags_label, #zrxiv_tag, #zrxiv_tag_add, #zrxiv_tags').forEach(elem => {elem.style.display = 'none';});
-		document.querySelectorAll('.zrxiv_checkbox').forEach(checkbox => {checkbox.checked = false;});
-	}
-}
-
-async function zrxiv_init(options)
-{
-	if(options.zrxiv_github_repo == null || options.zrxiv_github_token == null)
-	{
-		document.getElementById('zrxiv_options_missing').style.display = ''; 
-		return;
-	}
-
-	const [match, github_username, github_repo] = new RegExp('github.com/(.+)/([^/]+)', 'g').exec(options.zrxiv_github_repo);
-	let zrxiv_api = new ZrxivGithubBackend(github_username, github_repo, options.zrxiv_github_token, window.location.href);
-	document.getElementById('zrxiv_tag_add').addEventListener('click', async function(event)
-	{
-		const tag = document.getElementById('zrxiv_tag').value;
-		await zrxiv_api.add_tag(tag);
-		await zrxiv_api.toggle_tag(tag, true);
-		document.getElementById('zrxiv_tags').appendChild(zrxiv_make_checkbox(zrxiv_api, tag, true));
-		document.getElementById('zrxiv_tag').value = '';
-	});
-	document.getElementById('zrxiv_toggle').addEventListener('click', function(event) { zrxiv_toggle(zrxiv_api, this.dataset.action); } );
-	document.getElementById('zrxiv_tag').addEventListener('keyup', function(event) { if (event.keyCode == 13) document.getElementById('zrxiv_tag_add').click(); });
-
-	let [doc, tags] = await Promise.all([zrxiv_api.init_doc(), zrxiv_api.get_tags()]);
-	zrxiv_tags_render(zrxiv_api, zrxiv_api.sha != null, zrxiv_api.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
-	if(zrxiv_api.sha == null)
-	{
-		if(!options.zrxiv_auto_save_timeout || await zrxiv_api.auto_save())
-			zrxiv_toggle('prevent-auto-save');
-		else
+		if(action == 'auto-save')
 		{
-			zrxiv_toggle(zrxiv_api, 'auto-save', options.zrxiv_auto_save_timeout);
-			await delay(options.zrxiv_auto_save_timeout);
-			zrxiv_toggle(zrxiv_api, 'save');
+			this.ui.zrxiv_toggle.innerText = 'Prevent auto-save in ' + this.auto_save_timeout + ' seconds';
+			this.ui.zrxiv_toggle.dataset.action = 'prevent-auto-save';
 		}
+		else if(action == 'prevent-auto-save')
+		{
+			this.ui.zrxiv_toggle.dataset.action = 'save';
+			this.ui.zrxiv_toggle.innerText = 'Save';
+			this.backend.auto_save(false);
+		}
+		else if(action == 'save' || action == 'saved')
+		{
+			if(action == 'save')
+			{
+				this.backend.add_doc();
+				this.render_tags(true);
+				this.backend.auto_save(true);
+			}
+			this.ui.zrxiv_toggle.dataset.action = 'delete';
+			this.ui.zrxiv_toggle.innerText = 'Delete';
+		}
+		else if(action == 'delete')
+		{
+			this.backend.del_doc();
+			this.render_tags(false);
+			this.backend.auto_save(false);
+			this.ui.zrxiv_toggle.dataset.action = 'save';
+			this.ui.zrxiv_toggle.innerText = 'Save';
+		}
+		this.ui.zrxiv_toggle.style.display = '';
 	}
-	else
-		zrxiv_toggle(zrxiv_api, 'saved');
+
+	bind()
+	{
+		const self = this;
+		this.ui.zrxiv_tag_add.addEventListener('click', async function()
+		{
+			const tag = self.ui.zrxiv_tag.value;
+			await self.backend.add_tag(tag);
+			await self.backend.toggle_tag(tag, true);
+			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
+			self.ui.zrxiv_tag.value = '';
+		});
+		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(this.dataset.action); } );
+		self.ui.zrxiv_tag.addEventListener('keyup', function(event) { if (event.keyCode == 13) self.ui.zrxiv_tag_add.click(); });
+	}
+
+	async start()
+	{
+		if(!this.backend)
+		{
+			this.ui.zrxiv_options_missing.style.display = ''; 
+			return;
+		}
+
+		let [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
+		this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
+		if(this.backend.sha == null)
+		{
+			if(!this.auto_save_timeout || await this.backend.auto_save())
+				this.document_action('prevent-auto-save');
+			else
+			{
+				this.document_action('auto-save');
+				await delay(this.zrxiv_auto_save_timeout);
+				this.document_action('save');
+			}
+		}
+		else
+			this.document_action('saved');
+	}
 }
 
 (async () => {
 	let container = document.createElement('div');
 	container.innerHTML = await (await fetch(chrome.extension.getURL('header.html'))).text();
 	document.body.insertBefore(container, document.body.firstChild);
-	zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
+	let frontend = new ZrxivFrontend(container, await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
+	frontend.bind();
+	await frontend.start();
 })();
-
-//let container = document.createElement('iframe');
-//container.src = chrome.extension.getURL('header.html');
-//document.body.insertBefore(container, document.body.firstChild);
-//document = container.contentDocument;
-//console.log(1, container.contentDocument);
-//container.onload = async event => zrxiv_init(await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}));
