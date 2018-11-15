@@ -260,7 +260,7 @@ class ZrxivFrontend
 			else
 			{
 				this.document_action('auto-save');
-				await delay(this.zrxiv_auto_save_timeout);
+				await delay(this.auto_save_timeout);
 				this.document_action('save');
 			}
 		}
