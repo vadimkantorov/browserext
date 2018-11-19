@@ -9,7 +9,7 @@
 			"matches": [
 				"https://arxiv.org/abs/*"
 			],
-			"js": ["header.js"],
+			"js": ["browserext.js", "header.js"],
 			"all_frames": true
 		}
 	],

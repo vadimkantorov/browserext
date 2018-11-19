@@ -1,8 +1,3 @@
-function async_chrome_storage_sync_get(obj)
-{
-	return new Promise(resolve => chrome.storage.sync.get(obj, resolve));
-}
-
 function delay(seconds)
 {
 	return new Promise(resolve => setTimeout(resolve, seconds * 1000));
@@ -124,18 +119,18 @@ class ZrxivGithubBackend
 
 	async auto_save(action)
 	{
-		let prevent_auto_save = (await async_chrome_storage_sync_get({prevent_auto_save : {}})).prevent_auto_save;
+		let prevent_auto_save = (await browser.storage.sync.get({prevent_auto_save : {}})).prevent_auto_save;
 		if(action == null)
 			return prevent_auto_save[this.doc.id];
 		else if(action == false)
 		{
 			prevent_auto_save[this.doc.id] = true;
-			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
+			browser.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
 		else if(action == true && prevent_auto_save.indexOf(this.doc.id) >= 0)
 		{
 			delete prevent_auto_save[this.doc.id];
-			chrome.storage.sync.set({prevent_auto_save : prevent_auto_save});
+			browser.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
 	}
 }
@@ -271,9 +266,9 @@ class ZrxivFrontend
 
 (async () => {
 	let container = document.createElement('div');
-	container.innerHTML = await (await fetch(chrome.extension.getURL('header.html'))).text();
+	container.innerHTML = await (await fetch(browser.extension.getURL('header.html'))).text();
 	document.body.insertBefore(container, document.body.firstChild);
-	let frontend = new ZrxivFrontend(container, await async_chrome_storage_sync_get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
+	let frontend = new ZrxivFrontend(container, await browser.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
 	frontend.bind();
 	await frontend.start();
 })();
