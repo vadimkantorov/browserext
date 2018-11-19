@@ -246,7 +246,7 @@ class ZrxivFrontend
 			return;
 		}
 
-		let [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
+		const [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
 		this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 		if(this.backend.sha == null)
 		{

@@ -1,8 +1,9 @@
 {
+	"author": "Vadim Kantorov",
 	"manifest_version": 2,
 	"name": "zrxiv",
 	"version": "0.1",
-	"permissions" : ["storage"],
+	"permissions" : ["storage", "https://export.arxiv.org/*", "https://api.github.com/*"],
 	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
@@ -13,11 +14,17 @@
 			"all_frames": true
 		}
 	],
-	"background" : { "scripts": ["background.js"] },
+	"background" : { "scripts": ["browserext.js", "background.js"], "persistent": false },
 	"browser_action": {
-		"default_title": "Open zrxiv"
+		"default_title": "Open zrxiv",
+		"default_icon" : {"256" : "logo.png", "40" : "logo.png"}
 	},
 	"web_accessible_resources": ["header.html", "options.html", "header.js", "options.js"],
-	"options_ui" : {"page" : "options.html", "open_in_tab" : false},
-	"homepage_url" : "https://github.com/vadimkantorov/zrxiv"
+	"options_ui" : {"page" : "options.html", "open_in_tab" : false, "browser_style" : true},
+	"options_page" : "options.html",
+	"homepage_url" : "https://github.com/zrxiv/zrxiv",
+
+	"applications": {
+		"gecko": {"id": "vadimkantorov@gmail.com"}
+	}
 }
