@@ -137,9 +137,9 @@ class ZrxivGithubBackend
 
 class ZrxivFrontend
 {
-	constructor(root_element, options, href)
+	constructor(container, options, href)
 	{
-		this.root_element = root_element;
+		this.container = container;
 		if(options.zrxiv_github_repo != null && options.zrxiv_github_token != null)
 		{
 			const [match, github_username, github_repo] = new RegExp('github.com/(.+)/([^/]+)', 'g').exec(options.zrxiv_github_repo);
@@ -148,7 +148,7 @@ class ZrxivFrontend
 		else
 			this.backend = null;
 		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
-		this.ui = { zrxiv_tag_add : root_element.querySelector('#zrxiv_tag_add'), zrxiv_tag : root_element.querySelector('#zrxiv_tag'), zrxiv_tags : root_element.querySelector('#zrxiv_tags'), zrxiv_toggle : root_element.querySelector('#zrxiv_toggle'), zrxiv_checkbox : root_element.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : root_element.querySelector('#zrxiv_options_missing'), zrxiv_tags_label : root_element.querySelector('#zrxiv_tags_label') };
+		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing')};
 	}
 
 	render_tag(tag, checked)
@@ -178,13 +178,13 @@ class ZrxivFrontend
 
 		if(show)
 		{
-			[this.ui.zrxiv_tags_label, this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = '';});
+			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = '';});
 			this.ui.zrxiv_tags.style.display = 'inline';
 		}
 		else
 		{
-			[this.ui.zrxiv_tags_label, this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = 'none';});
-			this.root_element.querySelectorAll('.zrxiv_checkbox').forEach(checkbox => {checkbox.checked = false;});
+			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = 'none';});
+			this.container.querySelectorAll('.zrxiv_checkbox').forEach(checkbox => {checkbox.checked = false;});
 		}
 	}
 
