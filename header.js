@@ -148,7 +148,7 @@ class ZrxivFrontend
 		else
 			this.backend = null;
 		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
-		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing')};
+		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span')};
 	}
 
 	render_tag(tag, checked)
@@ -188,38 +188,37 @@ class ZrxivFrontend
 		}
 	}
 
+	render_status(good, status_text)
+	{
+		
+	}
+
 	document_action(action)
 	{
-		if(action == 'auto-save')
+		if(action == 'zrxiv_auto_save')
+			this.ui.zrxiv_toggle_status.className = 'zrxiv_prevent_auto_save'; // ' in' + this.auto_save_timeout + ' seconds';
+		else if(action == 'zrxiv_prevent_auto_save')
 		{
-			this.ui.zrxiv_toggle.innerText = 'Prevent auto-save in ' + this.auto_save_timeout + ' seconds';
-			this.ui.zrxiv_toggle.dataset.action = 'prevent-auto-save';
-		}
-		else if(action == 'prevent-auto-save')
-		{
-			this.ui.zrxiv_toggle.dataset.action = 'save';
-			this.ui.zrxiv_toggle.innerText = 'Save';
+			this.ui.zrxiv_toggle_status.className = 'zrxiv_save';
 			this.backend.auto_save(false);
 		}
-		else if(action == 'save' || action == 'saved')
+		else if(action == 'zrxiv_save')
 		{
-			if(action == 'save')
-			{
-				this.backend.add_doc();
-				this.render_tags(true);
-				this.backend.auto_save(true);
-			}
-			this.ui.zrxiv_toggle.dataset.action = 'delete';
-			this.ui.zrxiv_toggle.innerText = 'Delete';
+			this.backend.add_doc();
+			this.render_tags(true);
+			this.backend.auto_save(true);
+			this.ui.zrxiv_toggle_status.className = 'zrxiv_delete';
 		}
-		else if(action == 'delete')
+		else if(action == 'zrxiv_delete')
 		{
 			this.backend.del_doc();
 			this.render_tags(false);
 			this.backend.auto_save(false);
-			this.ui.zrxiv_toggle.dataset.action = 'save';
-			this.ui.zrxiv_toggle.innerText = 'Save';
+			this.ui.zrxiv_toggle_status.className = 'zrxiv_save';
 		}
+		else if(action == 'zrxiv_saved')
+			this.ui.zrxiv_toggle_status.className = 'zrxiv_delete';
+			
 		this.ui.zrxiv_toggle.style.display = '';
 	}
 
@@ -234,7 +233,7 @@ class ZrxivFrontend
 			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
 			self.ui.zrxiv_tag.value = '';
 		});
-		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(this.dataset.action); } );
+		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(self.ui.zrxiv_toggle_status.className); } );
 		self.ui.zrxiv_tag.addEventListener('keyup', function(event) { if (event.keyCode == 13) self.ui.zrxiv_tag_add.click(); });
 	}
 
@@ -251,16 +250,16 @@ class ZrxivFrontend
 		if(this.backend.sha == null)
 		{
 			if(!this.auto_save_timeout || await this.backend.auto_save())
-				this.document_action('prevent-auto-save');
+				this.document_action('zrxiv_prevent_auto_save');
 			else
 			{
-				this.document_action('auto-save');
+				this.document_action('zrxiv_auto_save');
 				await delay(this.auto_save_timeout);
-				this.document_action('save');
+				this.document_action('zrxiv_save');
 			}
 		}
 		else
-			this.document_action('saved');
+			this.document_action('zrxiv_saved');
 	}
 }
 

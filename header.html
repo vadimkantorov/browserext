@@ -1,5 +1,10 @@
 <div width="100%" height="60px">
+	<style>
+		.zrxiv_prevent_auto_save::after, .zrxiv_delete::after {	content : "Save" }
+		.zrxiv_auto_save::after { content : "Prevent auto-save" }
+		.zrxiv_save::after { content : "Delete" }
+	</style>
 	<span id="zrxiv_options_missing" style="display:none">zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" style="display:none"></button><input type="text" id="zrxiv_tag" style="float:right; display:none" placeholder="(type in here)"></input><button type="button" id="zrxiv_tag_add" style="float:right; display:none; margin-left:1em">Add a new tag:</button><div id="zrxiv_tags" style="display:none; float:right"></div>
+	<button type="button" id="zrxiv_toggle" style="display:none"><span>ℤ </span></button><input type="text" id="zrxiv_tag" style="float:right; display:none" placeholder="(type in here)"></input><button type="button" id="zrxiv_tag_add" style="float:right; display:none; margin-left:1em">Add a new tag:</button><div id="zrxiv_tags" style="display:none; float:right"></div>
 	<template id="zrxiv_checkbox"><label><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 </div>
