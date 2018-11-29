@@ -1,7 +1,7 @@
-<div width="100%" height="60px">
+<div width="100%" height="60px" style="--zrxiv_auto_save_timeout: ''">
 	<style>
 		.zrxiv_prevent_auto_save::after, .zrxiv_save::after { content : "Save" }
-		.zrxiv_auto_save::after { content : "Prevent auto-save" }
+		.zrxiv_auto_save::after { content : "Prevent auto-save in " attr(data-zrxiv_auto_save_timeout) " seconds" }
 		.zrxiv_delete::after {	content : "Delete" }
 	</style>
 	<span id="zrxiv_options_missing" style="display:none">zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
