@@ -62,7 +62,7 @@ class ZrxivGithubBackend
 	async init_doc()
 	{
 		this.doc = await new ZrxivDocumentParser(this.href, Math.floor(new Date().getTime() / 1000)).parse();
-		const resp = await this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json');
+		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json');
 		if(resp.status == 200)
 		{
 			const {content, sha} = await resp.json();
@@ -73,12 +73,12 @@ class ZrxivGithubBackend
 
 	get_tags()
 	{
-		return this.github_api_request('/contents/_data/tags');
+		return this.github_api_request('/contents/data/tags');
 	}
 
 	put_doc(message, sha, retry)
 	{
-		return this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
+		return this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
 		.then(async resp => { if(resp.status == 200 || resp.status == 201)	this.sha = (await resp.json()).content.sha;	})
 		.catch(async resp => 
 		{
@@ -92,7 +92,7 @@ class ZrxivGithubBackend
 
 	async del_doc(retry)
 	{
-		return this.github_api_request('/contents/_data/documents/' + this.doc.id + '.json', 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
+		return this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
 		.catch(async resp => 
 		{
 			if(resp.status == 409 && retry != false)
@@ -106,7 +106,7 @@ class ZrxivGithubBackend
 
 	add_tag(tag, retry)
 	{
-		return this.github_api_request('/contents/_data/tags/' + tag + '.json', 'put', {message : 'Create tag ' + tag, content : base64_encode_utf8('{}') })
+		return this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : base64_encode_utf8('---\n---\n') })
 		.catch(async resp => 
 		{
 			if(resp.status == 409 && retry != false)
@@ -209,12 +209,12 @@ class ZrxivFrontend
 
 		if(show)
 		{
-			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = '';});
+			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.hidden = false;});
 			this.ui.zrxiv_tags.style.display = 'inline';
 		}
 		else
 		{
-			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.style.display = 'none';});
+			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.hidden = true;});
 			this.ui.zrxiv_checkboxes().forEach(checkbox => {checkbox.checked = false;});
 		}
 	}
@@ -251,14 +251,14 @@ class ZrxivFrontend
 				break;
 		}
 			
-		this.ui.zrxiv_toggle.style.display = '';
+		this.ui.zrxiv_toggle.hidden = false;
 	}
 
 	async start()
 	{
 		if(!this.backend)
 		{
-			this.ui.zrxiv_options_missing.style.display = ''; 
+			this.ui.zrxiv_options_missing.hidden = false;
 			return;
 		}
 
