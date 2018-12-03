@@ -106,7 +106,7 @@ class ZrxivGithubBackend
 
 	add_tag(tag, retry)
 	{
-		return this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : base64_encode_utf8('---\n---\n') })
+		return this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
 		.catch(async resp => 
 		{
 			if(resp.status == 409 && retry != false)
