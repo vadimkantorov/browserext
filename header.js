@@ -76,45 +76,37 @@ class ZrxivGithubBackend
 		return this.github_api_request('/contents/data/tags');
 	}
 
-	put_doc(message, sha, retry)
+	async put_doc(message, sha, retry)
 	{
-		return this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
-		.then(async resp => { if(resp.status == 200 || resp.status == 201)	this.sha = (await resp.json()).content.sha;	})
-		.catch(async resp => 
+		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
+		if(resp.status == 200 || resp.status == 201)
+			this.sha = (await resp.json()).content.sha;
+		else if(resp.status == 409 && retry != false)
 		{
-			if(resp.status == 409 && retry != false)
-			{
-				await delay(this.retry_delay_seconds);
-				return this.put_doc(message, sha ? ((await this.init_doc()) || this.sha) : null, false);
-			}
-		})
+			await delay(this.retry_delay_seconds);
+			await this.put_doc(message, sha ? ((await this.init_doc()) || this.sha) : null, false);
+		}
 	}
 
 	async del_doc(retry)
 	{
-		return this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
-		.catch(async resp => 
+		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
+		if(resp.status == 409 && retry != false)
 		{
-			if(resp.status == 409 && retry != false)
-			{
-				await delay(this.retry_delay_seconds);
-				await this.init_doc();
-				return this.del_doc(false);
-			}
-		})
+			await delay(this.retry_delay_seconds);
+			await this.init_doc();
+			return this.del_doc(false);
+		}
 	}
 
-	add_tag(tag, retry)
+	async add_tag(tag, retry)
 	{
-		return this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
-		.catch(async resp => 
+		const resp = this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
+		if(resp.status == 409 && retry != false)
 		{
-			if(resp.status == 409 && retry != false)
-			{
-				await delay(this.retry_delay_seconds);
-				return this.add_tag(tag, false);
-			}
-		});
+			await delay(this.retry_delay_seconds);
+			return this.add_tag(tag, false);
+		}
 	}
 
 	add_doc()
@@ -172,10 +164,11 @@ class ZrxivFrontend
 		this.ui.zrxiv_tag_add.addEventListener('click', async function()
 		{
 			const tag = self.ui.zrxiv_tag.value;
+			self.operation_status('creating tag');
 			await self.backend.add_tag(tag);
-			await self.backend.toggle_tag(tag, true);
 			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
 			self.ui.zrxiv_tag.value = '';
+			self.ui.zrxiv_tags.lastChild.firstChild.click();
 		});
 		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(self.ui.zrxiv_toggle_status.className); } );
 		self.ui.zrxiv_tag.addEventListener('keyup', function(event) { if (event.keyCode == 13) self.ui.zrxiv_tag_add.click(); });
@@ -190,7 +183,11 @@ class ZrxivFrontend
 		span.textContent = tag;
 		checkbox.value = tag;
 		checkbox.checked = checked;
-		checkbox.addEventListener('click', function() { self.backend.toggle_tag(this.value, this.checked); });
+		checkbox.addEventListener('click', function() {
+			self.operation_status('toggling tag');
+			self.backend.toggle_tag(this.value, this.checked);
+			self.operation_status(null);
+		});
 		return label;
 	}
 
@@ -233,17 +230,21 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_save':
+				this.operation_status('saving');
 				await this.backend.add_doc();
 				this.render_tags(true);
 				await this.backend.auto_save(true);
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete';
+				this.operation_status(null);
 				break;
 
 			case 'zrxiv_delete':
+				this.operation_status('deleting');
 				await this.backend.del_doc();
 				this.render_tags(false);
 				await this.backend.auto_save(false);
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_save';
+				this.operation_status(null);
 				break;
 
 			case 'zrxiv_saved':
@@ -252,6 +253,11 @@ class ZrxivFrontend
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
+	}
+
+	operation_status(status_text)
+	{
+		this.ui.zrxiv_toggle.title = status_text || 'ready';
 	}
 
 	async start()
