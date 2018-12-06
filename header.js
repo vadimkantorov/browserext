@@ -27,7 +27,7 @@ class ZrxivGithubBackend
 
 	async init_doc()
 	{
-		this.doc = await parse_doc(null, this.href, Math.floor(new Date().getTime() / 1000));
+		this.doc = await parse_doc(document, this.href, Math.floor(new Date().getTime() / 1000));
 		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json');
 		if(resp.status == 200)
 		{

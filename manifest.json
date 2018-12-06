@@ -8,7 +8,7 @@
 	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
-			"matches": ["https://arxiv.org/abs/*"],
+			"matches": ["https://arxiv.org/abs/*", "*://papers.nips.cc/paper/*"],
 			"js": ["browserext.js", "parsers.js", "header.js"],
 			"all_frames": true
 		}
