@@ -17,7 +17,7 @@ async function arxiv(page, href, date)
 	};
 }
 
-function nips(page, href, date)
+async function nips(page, href, date)
 {
 	const pdf = page.evaluate('//a[text()="[PDF]"]', page).iterateNext().href;
 	const bibtex = page.evaluate('//a[text()="[BibTeX]"]', page).iterateNext().href;
@@ -28,14 +28,14 @@ function nips(page, href, date)
 		id : 'neurips.' + new RegExp('/paper/(\\d+)-.+').exec(pdf)[1],
 		url : href,
 		pdf : 'https://papers.nips.cc' + pdf,
-		bibtex : 'https://papers.nips.cc' + bibtex,
+		bibtex : await (await fetch('https://papers.nips.cc' + bibtex).text()),
 		source : 'nips.cc',
 		date : date,
 		tags : []
 	};
 }
 
-async function parse_doc(page, href, date)
+function parse_doc(page, href, date)
 {
 	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips};
 	for(const k in parsers)
