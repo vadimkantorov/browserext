@@ -28,7 +28,7 @@ async function nips(page, href, date)
 		id : 'neurips.' + new RegExp('/paper/(\\d+)-.+').exec(pdf)[1],
 		url : href,
 		pdf : pdf,
-		bibtex : await (await fetch(bibtex).text()),
+		bibtex : format_bibtex(await (await fetch(bibtex).text())),
 		source : 'nips.cc',
 		date : date,
 		tags : []
@@ -45,7 +45,7 @@ async function openreview(page, href, date)
 		id : 'openreview.' + entry.id,
 		url : href,
 		pdf : 'https://openreview.net' + entry.content.pdf,
-		bibtex : entry.content._bibtex,
+		bibtex : format_bibtex(entry.content._bibtex),
 		source : 'openreview.net',
 		date : date,
 		tags : []
@@ -59,15 +59,20 @@ async function cvf(page, href, date)
 		title : page.querySelector('#papertitle').innerText,
 		authors : document.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
 		abstract : page.querySelector('#abstract').innerText,
-		id : 'thecvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
+		id : 'cvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
 		url : href,
 		pdf : 'pdf,
-		bibtex : page.querySelector('.bibref').innerText,
+		bibtex : format_bibtex(page.querySelector('.bibref').innerText),
 		arxiv : page.evaluate('//a[text()="arXiv"]', page).iterateNext().href,
 		source : 'thecvf.com',
 		date : date,
 		tags : []
 	}
+}
+
+function format_bibtex(bibtex)
+{
+	return bibtex.replace('\n\n', '\n').replace('\n', '\n  ').trim();
 }
 
 function parse_doc(page, href, date)
