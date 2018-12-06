@@ -10,3 +10,9 @@ if(is_chrome || is_edge)
 	Object.defineProperty(browser.storage.sync, 'get', {value: keys => new Promise(resolve => storage_sync_get(keys, resolve)), writable: false});
 	Object.defineProperty(browser.storage.sync, 'set', {value: keys => new Promise(resolve => storage_sync_set(keys, resolve)), writable: false});
 }
+
+function delay(seconds)
+{
+	return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+}
+
