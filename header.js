@@ -8,40 +8,6 @@ function base64_encode_utf8(str)
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {return String.fromCharCode(parseInt(p1, 16)) }));
 }
 
-class ZrxivDocumentParser
-{
-	constructor(href, date)
-	{
-		this.href = href;
-		this.date = date;
-		this.parser = href.includes('//arxiv.org') ? 'arxiv' : null;
-	}
-
-	parse()
-	{
-		return this[this.parser](this.href, this.date);
-	}
-
-	async arxiv(href, date)
-	{
-		const xml = await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
-		const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
-		const [match, category, id] = new RegExp('.+arxiv.org/abs/(.+/)?([^v]+)', 'g').exec(entry.querySelector('id').innerText);
-		const url = 'https://arxiv.org/abs/' + (category ? category + '/' + id : id)
-		return {
-			title : entry.querySelector('title').innerText, 
-			author : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
-			abstract : entry.querySelector('summary').innerText,
-			id : 'arxiv.' + (category ? category + '_' + id : id),
-			url : url,
-			pdf : url.replace('arxiv.org/abs/', 'arxiv.org/pdf/'),
-			source : 'arxiv.org',
-			date : date,
-			tags : []
-		};
-	}
-}
-
 class ZrxivGithubBackend
 {
 	constructor(github_username, github_repo, github_token, href)
@@ -61,7 +27,7 @@ class ZrxivGithubBackend
 
 	async init_doc()
 	{
-		this.doc = await new ZrxivDocumentParser(this.href, Math.floor(new Date().getTime() / 1000)).parse();
+		this.doc = await parse_doc(null, this.href, Math.floor(new Date().getTime() / 1000));
 		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json');
 		if(resp.status == 200)
 		{
@@ -184,7 +150,7 @@ class ZrxivFrontend
 		checkbox.value = tag;
 		checkbox.checked = checked;
 		checkbox.addEventListener('click', function() {
-			self.operation_status('toggling tag');
+			self.operation_status('toggling tag ' + this.value);
 			self.backend.toggle_tag(this.value, this.checked);
 			self.operation_status(null);
 		});

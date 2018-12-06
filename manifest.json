@@ -9,7 +9,7 @@
 	"content_scripts": [
 		{
 			"matches": ["https://arxiv.org/abs/*"],
-			"js": ["browserext.js", "header.js"],
+			"js": ["browserext.js", "parsers.js", "header.js"],
 			"all_frames": true
 		}
 	],
@@ -18,7 +18,7 @@
 		"default_title": "Open zrxiv",
 		"default_icon" : {"256" : "logo.png", "40" : "logo.png"}
 	},
-	"web_accessible_resources": ["header.html", "options.html", "header.js", "options.js"],
+	"web_accessible_resources": ["header.html", "options.html", "parsers.js", "header.js", "options.js"],
 	"options_ui" : {"page" : "options.html", "open_in_tab" : false, "browser_style" : true},
 	"options_page" : "options.html",
 	"homepage_url" : "https://github.com/zrxiv/zrxiv",
