@@ -19,16 +19,16 @@ async function arxiv(page, href, date)
 
 async function nips(page, href, date)
 {
-	const pdf = page.evaluate('//a[text()="[PDF]"]', page).iterateNext().href;
-	const bibtex = page.evaluate('//a[text()="[BibTeX]"]', page).iterateNext().href;
+	const pdf = page.evaluate('//a[text()="[PDF]"]', page).iterateNext().href.replace('http://', 'https://');
+	const bibtex = page.evaluate('//a[text()="[BibTeX]"]', page).iterateNext().href.replace('http://', 'https://');
 	return {
 		title : page.querySelector('.subtitle').innerText,
 		authors : Array.from(page.querySelectorAll('.author')).map(elem => elem.innerText),
 		abstract : page.querySelector('.abstract').innerText,
 		id : 'neurips.' + new RegExp('/paper/(\\d+)-.+').exec(pdf)[1],
 		url : href,
-		pdf : 'https://papers.nips.cc' + pdf,
-		bibtex : await (await fetch('https://papers.nips.cc' + bibtex).text()),
+		pdf : pdf,
+		bibtex : await (await fetch(bibtex).text()),
 		source : 'nips.cc',
 		date : date,
 		tags : []
@@ -52,9 +52,27 @@ async function openreview(page, href, date)
 	}
 }
 
+async function cvf(page, href, date)
+{
+	const pdf = page.evaluate('//a[text()="pdf"]', page).iterateNext().href;
+	return {
+		title : page.querySelector('#papertitle').innerText,
+		authors : document.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
+		abstract : page.querySelector('#abstract').innerText,
+		id : 'thecvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
+		url : href,
+		pdf : 'pdf,
+		bibtex : page.querySelector('.bibref').innerText,
+		arxiv : page.evaluate('//a[text()="arXiv"]', page).iterateNext().href,
+		source : 'thecvf.com',
+		date : date,
+		tags : []
+	}
+}
+
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
