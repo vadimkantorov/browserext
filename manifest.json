@@ -8,7 +8,7 @@
 	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
-			"matches": ["https://arxiv.org/abs/*", "*://papers.nips.cc/paper/*"],
+			"matches": ["*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*"],
 			"js": ["browserext.js", "parsers.js", "backend.js", "frontend.js"],
 			"all_frames": true
 		}

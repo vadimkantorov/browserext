@@ -6,7 +6,7 @@ async function arxiv(page, href, date)
 	const url = 'https://arxiv.org/abs/' + (category ? category + '/' + id : id)
 	return {
 		title : entry.querySelector('title').innerText, 
-		author : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
+		authors : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
 		abstract : entry.querySelector('summary').innerText,
 		id : 'arxiv.' + (category ? category + '_' + id : id),
 		url : url,
@@ -35,9 +35,26 @@ async function nips(page, href, date)
 	};
 }
 
+async function openreview(page, href, date)
+{
+	const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.original != null)[0];
+	return {
+		title : entry.content.title,
+		authors : entry.content.authors,
+		abstract : entry.content.abstract,
+		id : 'openreview.' + entry.id,
+		url : href,
+		pdf : 'https://openreview.net' + entry.content.pdf,
+		bibtex : entry.content._bibtex,
+		source : 'openreview.net',
+		date : date,
+		tags : []
+	}
+}
+
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
