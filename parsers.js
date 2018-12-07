@@ -91,12 +91,12 @@ async function hal(page, href, date)
 async function biorxiv(page, href, date)
 {
 	return {
-		title : page.querySelector('meta[name="citation_title"]').content,
-		authors : Array.from(page.querySelectorAll('meta[name="citation_author"]')).map(meta => meta.content),
-		abstract : page.querySelector('meta[name="citation_abstract"]').content,
-		id : 'biorxiv.' + strip_version(page.querySelector('meta[name="citation_id"]').content),
-		url : page.querySelector('link[rel="citation_public_url"]').href,
-		pdf : page.querySelector('meta[name="citation_pdf_url"]').content,
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : find_meta(page, 'citation_abstract'),
+		id : 'biorxiv.' + strip_version(find_meta(page, 'citation_id')),
+		url : find_meta(page, 'citation_public_url'),
+		pdf : find_meta(page, 'citation_pdf_url'),
 		bibtex : format_bibtex(await (await fetch(find_link_by_text(page, 'BibTeX'))).text()),
 		source : 'biorxiv.org',
 		date : date,
@@ -106,9 +106,15 @@ async function biorxiv(page, href, date)
 	}
 }
 
+function find_meta(page, text, type)
+{
+	const selector = 'meta[name="' + text + '"]';
+	return type == Array ? Array.from(page.querySelectorAll(selector)).map(meta => meta.content) : page.querySelector(selector).content;
+}
+
 function find_link_by_text(page, text)
 {
-	return page.evaluate('//a[text()="['+ text + ']"]', page).iterateNext().href;
+	return page.evaluate('//a[text()="'+ text + '"]', page).iterateNext().href;
 }
 
 function strip_version(doc_id)
