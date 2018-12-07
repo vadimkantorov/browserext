@@ -143,7 +143,8 @@ class ZrxivFrontend
 
 (async () => {
 	let container = document.createRange().createContextualFragment(await (await fetch(browser.extension.getURL('frontend.html'))).text()).querySelector('div');
-	document.body.insertBefore(container, document.body.firstChild);
+	const target = document.getElementById('container') || document.body;
+	target.insertBefore(container, target.firstChild);
 	let frontend = new ZrxivFrontend(container, await browser.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
 	frontend.bind();
 	await frontend.start();

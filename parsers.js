@@ -61,7 +61,7 @@ async function cvf(page, href, date)
 		abstract : page.querySelector('#abstract').innerText,
 		id : 'cvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
 		url : href,
-		pdf : 'pdf,
+		pdf : pdf,
 		bibtex : format_bibtex(page.querySelector('.bibref').innerText),
 		arxiv : page.evaluate('//a[text()="arXiv"]', page).iterateNext().href,
 		source : 'thecvf.com',
@@ -72,7 +72,7 @@ async function cvf(page, href, date)
 
 async function hal(page, href, date)
 {
-	const entry = await (await fetch(href + (href.endsWith('/') ? '' : '/') + 'json')).json().response.docs[0];
+	const entry = (await (await fetch(href + (href.endsWith('/') ? '' : '/') + 'json')).json()).response.docs[0];
 	return {
 		title : entry.title_s,
 		authors : entry.authFullName_s,
