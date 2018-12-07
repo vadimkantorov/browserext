@@ -74,7 +74,7 @@ async function hal(page, href, date)
 {
 	const entry = (await (await fetch(href + (href.endsWith('/') ? '' : '/') + 'json')).json()).response.docs[0];
 	return {
-		title : entry.title_s,
+		title : entry.title_s[0],
 		authors : entry.authFullName_s,
 		abstract : entry.abstract_s[0],
 		id : 'hal.' + entry.halId_s.replace('hal-', ''),
