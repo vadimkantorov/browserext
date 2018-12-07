@@ -103,7 +103,7 @@ async function ssrn(page, href, date)
 	const doi = find_meta(page, 'citation_doi');
 	return {
 		title : find_meta(page, 'citation_title'),
-		authors : find_meta(page, 'citation_author', Array).map(author => author.split(',').reverse().join(' ')),
+		authors : find_meta(page, 'citation_author', Array).map(author => author.split(', ').reverse().join(' ')),
 		abstract : page.querySelector('.abstract-text>p').textContent.trim(),
 		id : doi.split('/')[1],
 		url : find_meta(page, 'citation_abstract_html_url'),
