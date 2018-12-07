@@ -70,14 +70,31 @@ async function cvf(page, href, date)
 	}
 }
 
+async function hal(page, href, date)
+{
+	const entry = await (await fetch(href + (href.endsWith('/') ? '' : '/') + 'json')).json().response.docs[0];
+	return {
+		title : entry.title_s,
+		authors : entry.authFullName_s,
+		abstract : entry.abstract_s[0],
+		id : 'hal.' + entry.halId_s.replace('hal-', ''),
+		url : entry.uri_s,
+		pdf : entry.files_s[0],
+		bibtex : entry.label_bibtex,
+		source : 'hal.archives-ouvertes.fr',
+		date : date,
+		tags : []
+	}
+}
+
 function format_bibtex(bibtex)
 {
-	return bibtex.replace('\n\n', '\n').replace('\n', '\n  ').trim();
+	return bibtex.replace('\n\n', '\n').replace('    \n', '\n').replace('    ', ' ').replace('\n', '\n  ').replace('\n  }', '\n}').replace('@InProceedings', '@inproceedings').trim();
 }
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
