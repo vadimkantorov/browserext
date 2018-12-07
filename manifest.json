@@ -3,12 +3,12 @@
 	"manifest_version": 2,
 	"name": "zrxiv",
 	"version": "0.1",
-	"description" : "GitHub-based bibliography manager for arxiv.org",
+	"description" : "GitHub-based bibliography manager for arxiv.org, openreview.net and other open access sites",
 	"permissions" : ["storage", "https://export.arxiv.org/*", "https://api.github.com/*"],
 	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
-			"matches": ["*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*"],
+			"matches": ["*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*", "*://papers.ssrn.com/sol3/papers.cfm?abstract_id=*"],
 			"js": ["browserext.js", "parsers.js", "backend.js", "frontend.js"],
 			"all_frames": true
 		}

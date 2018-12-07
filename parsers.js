@@ -88,14 +88,32 @@ async function hal(page, href, date)
 	}
 }
 
-async function biorxiv(page, href, date)
+function biorxiv(page, href, date)
 {
 	return highwire(page, href, date, 'biorxiv', 'biorxiv.org');
 }
 
-async function pnas(page, href, date)
+function pnas(page, href, date)
 {
 	return highwire(page, href, date, 'pnas', 'pnas.org');
+}
+
+async function ssrn(page, href, date)
+{
+	const doi = find_meta(page, 'citation_doi');
+	return {
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array).map(author => author.split(',').reverse().join(' ')),
+		abstract : page.querySelector('.abstract-text>p').textContent.trim(),
+		id : doi.split('/')[1],
+		url : find_meta(page, 'citation_abstract_html_url'),
+		pdf : find_meta(page, 'citation_pdf_url'),
+		bibtex : format_bibtex(await bibtex_crossref(doi)),
+		source : 'ssrn.com',
+		date : date,
+		tags : [],
+		doi : doi
+	}
 }
 
 async function highwire(page, href, date, provider, source)
@@ -114,6 +132,11 @@ async function highwire(page, href, date, provider, source)
 
 		doi : find_meta(page, 'citation_doi')
 	}
+}
+
+async function bibtex_crossref(doi)
+{
+	return (await fetch('https://dx.doi.org/' + doi, { headers: {'Accept' : 'text/bibliography; style=bibtex'} } )).text();
 }
 
 function find_meta(page, text, type)
@@ -139,7 +162,7 @@ function format_bibtex(bibtex)
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
