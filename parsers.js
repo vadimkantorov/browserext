@@ -90,19 +90,29 @@ async function hal(page, href, date)
 
 async function biorxiv(page, href, date)
 {
+	return highwire(page, href, date, 'biorxiv', 'biorxiv.org');
+}
+
+async function pnas(page, href, date)
+{
+	return highwire(page, href, date, 'pnas', 'pnas.org');
+}
+
+async function highwire(page, href, date, provider, source)
+{
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
 		abstract : find_meta(page, 'citation_abstract'),
-		id : 'biorxiv.' + strip_version(find_meta(page, 'citation_id')),
+		id : provider + '.' + strip_version(find_meta(page, 'citation_id')),
 		url : find_meta(page, 'citation_public_url'),
 		pdf : find_meta(page, 'citation_pdf_url'),
 		bibtex : format_bibtex(await (await fetch(find_link_by_text(page, 'BibTeX'))).text()),
-		source : 'biorxiv.org',
+		source : source,
 		date : date,
 		tags : [],
 
-		doi : page.querySelector('meta[name="citation_doi"]').content
+		doi : find_meta(page, 'citation_doi')
 	}
 }
 
@@ -124,12 +134,12 @@ function strip_version(doc_id)
 
 function format_bibtex(bibtex)
 {
-	return bibtex.replace('\n\n', '\n').replace('    \n', '\n').replace('    ', ' ').replace('\n', '\n  ').replace('\n  }', '\n}').replace('@InProceedings', '@inproceedings').trim();
+	return bibtex.replace('\n\n', '\n').replace('    \n', '\n').replace('    ', ' ').replace('\t', ' ').replace('\n', '\n  ').replace('\n  }', '\n}').replace('@InProceedings', '@inproceedings').trim();
 }
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
