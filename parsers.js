@@ -19,8 +19,8 @@ async function arxiv(page, href, date)
 
 async function nips(page, href, date)
 {
-	const pdf = page.evaluate('//a[text()="[PDF]"]', page).iterateNext().href.replace('http://', 'https://');
-	const bibtex = page.evaluate('//a[text()="[BibTeX]"]', page).iterateNext().href.replace('http://', 'https://');
+	const pdf = find_link_by_text(page, '[PDF]').replace('http://', 'https://');
+	const bibtex = find_link_by_text(page, '[BibTeX]').replace('http://', 'https://');
 	return {
 		title : page.querySelector('.subtitle').innerText,
 		authors : Array.from(page.querySelectorAll('.author')).map(elem => elem.innerText),
@@ -54,7 +54,7 @@ async function openreview(page, href, date)
 
 async function cvf(page, href, date)
 {
-	const pdf = page.evaluate('//a[text()="pdf"]', page).iterateNext().href;
+	const pdf = find_link_by_text(page, 'pdf');
 	return {
 		title : page.querySelector('#papertitle').innerText,
 		authors : document.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
@@ -63,10 +63,11 @@ async function cvf(page, href, date)
 		url : href,
 		pdf : pdf,
 		bibtex : format_bibtex(page.querySelector('.bibref').innerText),
-		arxiv : page.evaluate('//a[text()="arXiv"]', page).iterateNext().href,
 		source : 'thecvf.com',
 		date : date,
-		tags : []
+		tags : [],
+
+		arxiv : find_link_by_text(page, 'arXiv')
 	}
 }
 
@@ -80,11 +81,39 @@ async function hal(page, href, date)
 		id : 'hal.' + entry.halId_s.replace('hal-', ''),
 		url : entry.uri_s,
 		pdf : entry.files_s[0],
-		bibtex : entry.label_bibtex,
+		bibtex : format_bibtex(entry.label_bibtex),
 		source : 'hal.archives-ouvertes.fr',
 		date : date,
 		tags : []
 	}
+}
+
+async function biorxiv(page, href, date)
+{
+	return {
+		title : page.querySelector('meta[name="citation_title"]').content,
+		authors : Array.from(page.querySelectorAll('meta[name="citation_author"]')).map(meta => meta.content),
+		abstract : page.querySelector('meta[name="citation_abstract"]').content,
+		id : 'biorxiv.' + strip_version(page.querySelector('meta[name="citation_id"]').content),
+		url : page.querySelector('link[rel="citation_public_url"]').href,
+		pdf : page.querySelector('meta[name="citation_pdf_url"]').content,
+		bibtex : format_bibtex(await (await fetch(find_link_by_text(page, 'BibTeX'))).text()),
+		source : 'biorxiv.org',
+		date : date,
+		tags : [],
+
+		doi : page.querySelector('meta[name="citation_doi"]').content
+	}
+}
+
+function find_link_by_text(page, text)
+{
+	return page.evaluate('//a[text()="['+ text + ']"]', page).iterateNext().href;
+}
+
+function strip_version(doc_id)
+{
+	return new RegExp('(.+)v.+', 'g').exec(doc_id)[1];
 }
 
 function format_bibtex(bibtex)
@@ -94,7 +123,7 @@ function format_bibtex(bibtex)
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
