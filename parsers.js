@@ -104,7 +104,7 @@ async function ssrn(page, href, date)
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array).map(author => author.split(', ').reverse().join(' ')),
-		abstract : page.querySelector('.abstract-text>p').textContent.trim(),
+		abstract : page.querySelector('.abstract-text>p').innerText,
 		id : doi.split('/')[1],
 		url : find_meta(page, 'citation_abstract_html_url'),
 		pdf : find_meta(page, 'citation_pdf_url'),
@@ -113,6 +113,24 @@ async function ssrn(page, href, date)
 		date : date,
 		tags : [],
 		doi : doi
+	}
+}
+
+async function projecteuclid(page, href, date)
+{
+	const url = find_meta(page, 'citation_abstract_html_url');
+	return {
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : page.querySelector('.abstract-text>p').innerText,
+		id : url.replace('https://projecteuclid.org/', 'projecteuclid.').replace('/', '_')
+		url : url,
+		pdf : find_meta(page, 'citation_pdf_url'),
+		bibtex : format_bibtex(await (await fetch(url.replace('.org/', '.org/export_citations?format=bibtex&h=')).text()),
+		source: 'projecteuclid.org',
+		date : date,
+		tags : [],
+		doi : find_meta(page, 'citation_doi')
 	}
 }
 
@@ -129,7 +147,6 @@ async function highwire(page, href, date, provider, source)
 		source : source,
 		date : date,
 		tags : [],
-
 		doi : find_meta(page, 'citation_doi')
 	}
 }
@@ -162,7 +179,7 @@ function format_bibtex(bibtex)
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn, "projecteuclid.org" : projecteuclid};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
