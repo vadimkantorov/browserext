@@ -192,7 +192,7 @@ function find_link_by_text(page, text)
 
 function strip_version(doc_id)
 {
-	return new RegExp('(.+)v.+', 'g').exec(doc_id)[1];
+	return new RegExp('(.+)(v.+)?', 'g').exec(doc_id)[1];
 }
 
 function format_bibtex(bibtex)
