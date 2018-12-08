@@ -123,10 +123,10 @@ async function projecteuclid(page, href, date)
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
 		abstract : page.querySelector('.abstract-text>p').innerText,
-		id : url.replace('https://projecteuclid.org/', 'projecteuclid.').replace('/', '_')
+		id : url.replace('https://projecteuclid.org/', '').replace('/', '_'),
 		url : url,
 		pdf : find_meta(page, 'citation_pdf_url'),
-		bibtex : format_bibtex(await (await fetch(url.replace('.org/', '.org/export_citations?format=bibtex&h=')).text()),
+		bibtex : format_bibtex(await (await fetch(url.replace('.org/', '.org/export_citations?format=bibtex&h='))).text()),
 		source: 'projecteuclid.org',
 		date : date,
 		tags : [],

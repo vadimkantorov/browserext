@@ -19,7 +19,7 @@ class ZrxivFrontend
 		this.ui.zrxiv_tag_add.addEventListener('click', async function()
 		{
 			const tag = self.ui.zrxiv_tag.value;
-			self.operation_status('creating tag');
+			self.operation_status('creating tag', true);
 			await self.backend.add_tag(tag);
 			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
 			self.ui.zrxiv_tag.value = '';
@@ -39,7 +39,7 @@ class ZrxivFrontend
 		checkbox.value = tag;
 		checkbox.checked = checked;
 		checkbox.addEventListener('click', function() {
-			self.operation_status('toggling tag ' + this.value);
+			self.operation_status('toggling tag ' + this.value, true);
 			self.backend.toggle_tag(this.value, this.checked);
 			self.operation_status(null);
 		});
@@ -85,7 +85,7 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_save':
-				this.operation_status('saving');
+				this.operation_status('saving', true);
 				await this.backend.add_doc();
 				this.render_tags(true);
 				await this.backend.auto_save(true);
@@ -94,7 +94,7 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_delete':
-				this.operation_status('deleting');
+				this.operation_status('deleting', true);
 				await this.backend.del_doc();
 				this.render_tags(false);
 				await this.backend.auto_save(false);
@@ -110,9 +110,10 @@ class ZrxivFrontend
 		this.ui.zrxiv_toggle.hidden = false;
 	}
 
-	operation_status(status_text)
+	operation_status(status_text, status)
 	{
 		this.ui.zrxiv_toggle.title = status_text || 'ready';
+		this.ui.zrxiv_toggle.className = 'zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error');
 	}
 
 	async start()

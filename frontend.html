@@ -3,17 +3,20 @@
 		.zrxiv_save::after { content : "Save" }
 		.zrxiv_prevent_auto_save::after { content : "Prevent auto-save in " attr(data-zrxiv_auto_save_timeout) " seconds" }
 		.zrxiv_delete::after { content : "Delete" }
-		.zrxiv_nowrap { white-space:nowrap }
+		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add { white-space:nowrap }
 		#zrxiv_tags { margin-left: auto }
 		#zrxiv_tag_add { margin-left: 1em }
 		#zrxiv_tag {width:auto}
 		.zrxiv_checkbox {margin:4px}
+		.zrxiv_status_ok {background-color:lightgreen}
+		.zrxiv_status_working {background-color:yellow}
+		.zrxiv_status_error {background-color:red}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_nowrap"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" class="zrxiv_nowrap" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_toggle" hidden><span>ℤ </span></button>
 	<div id="zrxiv_tags" hidden></div>
-	<button type="button" id="zrxiv_tag_add" class="zrxiv_nowrap" hidden>Add a new tag:</button>
+	<button type="button" id="zrxiv_tag_add" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" placeholder="(type in here)" hidden></input>
 </div>
