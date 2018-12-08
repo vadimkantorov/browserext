@@ -137,16 +137,15 @@ async function projecteuclid(page, href, date)
 async function aps(page, href, date)
 {
 	const doi = find_meta(page, 'citation_doi');
-	const url = page.querySelector('link[rel="canonical"]').href;
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
 		abstract : page.querySelector('.abstract .content >p').innerText,
 		id : 'aps.' + strip_doi_part(doi),
-		url : url,
+		url : page.querySelector('link[rel="canonical"]').href,
 		pdf : find_meta(page, 'citation_pdf_url'),
-		bibtex : await (await fetch(url.replace('abstract', 'export'))).text(),
-		source : source,
+		bibtex : await (await fetch(page.querySelector('meta[property="og:url"]').content.replace('abstract', 'export'))).text(),
+		source : 'aps.org',
 		date : date,
 		tags : [],
 		doi : doi
@@ -183,7 +182,7 @@ function find_meta(page, text, type)
 
 function strip_doi_part(doi)
 {
-	return doi.split('/')[1].split('.').replace('.', '_');
+	return doi.split('/')[1].replace('.', '_');
 }
 
 function find_link_by_text(page, text)
