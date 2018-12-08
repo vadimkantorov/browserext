@@ -134,6 +134,25 @@ async function projecteuclid(page, href, date)
 	}
 }
 
+async function aps(page, href, date)
+{
+	const doi = find_meta(page, 'citation_doi');
+	const url = page.querySelector('link[rel="canonical"]').href;
+	return {
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : page.querySelector('.abstract .content >p').innerText,
+		id : 'aps.' + strip_doi_part(doi),
+		url : url,
+		pdf : find_meta(page, 'citation_pdf_url'),
+		bibtex : await (await fetch(url.replace('abstract', 'export'))).text(),
+		source : source,
+		date : date,
+		tags : [],
+		doi : doi
+	}
+}
+
 async function highwire(page, href, date, provider, source)
 {
 	return {
@@ -162,6 +181,11 @@ function find_meta(page, text, type)
 	return type == Array ? Array.from(page.querySelectorAll(selector)).map(meta => meta.content) : page.querySelector(selector).content;
 }
 
+function strip_doi_part(doi)
+{
+	return doi.split('/')[1].split('.').replace('.', '_');
+}
+
 function find_link_by_text(page, text)
 {
 	return page.evaluate('//a[text()="'+ text + '"]', page).iterateNext().href;
@@ -179,7 +203,7 @@ function format_bibtex(bibtex)
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn, "projecteuclid.org" : projecteuclid};
+	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn, "projecteuclid.org" : projecteuclid, 'journals.aps.org' : aps};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);

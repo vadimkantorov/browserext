@@ -21,6 +21,7 @@ class ZrxivFrontend
 			const tag = self.ui.zrxiv_tag.value;
 			self.operation_status('creating tag', true);
 			await self.backend.add_tag(tag);
+			self.operation_status(null);
 			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
 			self.ui.zrxiv_tag.value = '';
 			self.ui.zrxiv_tags.lastChild.firstChild.click();
@@ -104,6 +105,7 @@ class ZrxivFrontend
 
 			case 'zrxiv_saved':
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete';
+				this.operation_status(null);
 				break;
 		}
 			
