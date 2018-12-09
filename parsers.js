@@ -194,10 +194,10 @@ async function iacr(page, href, date)
 	let abstract = '';
 	for(let i = 3; i < p.length; i++)
 	{
-		if(a[i].innerText.includes('Category'))
+		if(p[i].innerText.includes('Category'))
 			break;
 
-		abstract += as[i].lastChild + ' ';
+		abstract += p[i].lastChild + ' ';
 	}
 	return {
 		title : page.querySelector('b').innerText,
