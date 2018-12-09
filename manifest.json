@@ -8,7 +8,7 @@
 	"icons" : {"256" : "logo.png"},
 	"content_scripts": [
 		{
-			"matches": ["*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*", "*://papers.ssrn.com/sol3/papers.cfm?abstract_id=*", "*://projecteuclid.org/*", "*://journals.aps.org/*/abstract/*"],
+			"matches": ["*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*", "*://papers.ssrn.com/sol3/papers.cfm?abstract_id=*", "*://projecteuclid.org/*", "*://journals.aps.org/*/abstract/*", "*://proceedings.mlr.press/*/*.html", "*://jmlr.org/*/*.html", "*://eprint.iacr.org/*/*"],
 			"js": ["browserext.js", "parsers.js", "backend.js", "frontend.js"],
 			"all_frames": true
 		}

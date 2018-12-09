@@ -1,7 +1,7 @@
 async function arxiv(page, href, date)
 {
 	const xml = await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
-	const entry = document.createRange().createContextualFragment(xml).querySelector('entry');
+	const entry = page.createRange().createContextualFragment(xml).querySelector('entry');
 	const [match, category, id] = new RegExp('.+arxiv.org/abs/(.+/)?([^v]+)', 'g').exec(entry.querySelector('id').innerText);
 	const url = 'https://arxiv.org/abs/' + (category ? category + '/' + id : id)
 	return {
@@ -152,6 +152,67 @@ async function aps(page, href, date)
 	}
 }
 
+function mlr(page, href, date)
+{
+	const url = find_meta(page, 'citation_abstract_html_url');
+	return {
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : page.querySelector('.abstract').innerText,
+		id : 'mlr.' + new RegExp(/.+\/(v\d+)\/(.+).html/, 'g').exec(url).slice(1).join('.'),
+		url : url,
+		pdf : find_meta(page, 'citation_pdf_url'),
+		bibtex : format_bibtex(page.querySelector('#bibtex').innerText),
+		source : 'mlr.press',
+		date : date,
+		tags: [],
+	}
+}
+
+async function jmlr(page, href, date)
+{
+	const pdf = find_meta(page, 'citation_pdf_url');
+	return {
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : page.querySelector('#content>h3').nextSibling.textContent.trim(),
+		id : 'jmlr.' + new RegExp(/.+\/papers\/(.+)\/(.+)\/.+/, 'g').exec(pdf).slice(1).join('.'),
+		url : pdf.replace('.pdf', '.html'),
+		pdf : pdf,
+		bibtex : await (await fetch(find_link_by_text(page, 'bib'))).text(),
+		source : 'jmlr.org',
+		date : date,
+		tags : []
+	}
+}
+
+async function iacr(page, href, date)
+{
+	const a = page.querySelectorAll('p a');
+	const url = a[a.length - 1];
+	const p = page.querySelectorAll('p');
+	let abstract = '';
+	for(let i = 3; i < p.length; i++)
+	{
+		if(a[i].innerText.includes('Category'))
+			break;
+
+		abstract += as[i].lastChild + ' ';
+	}
+	return {
+		title : page.querySelector('b').innerText,
+		authors : page.querySelector('i').innerText.split(' and '),
+		abstract : abstract.trim(),
+		id : 'iacr.' + url.innerText.replace('.', '').replace(/\//g, '.'),
+		url : url.href,
+		pdf : a[0].href,
+		bibtex : page.createRange().createContextualFragment(await (await fetch(a[1].href)).text()).querySelector('pre').innerText,
+		source : 'iacr.org',
+		date : date,
+		tags : []
+	}
+}
+
 async function highwire(page, href, date, provider, source)
 {
 	return {
@@ -197,12 +258,12 @@ function strip_version(doc_id)
 
 function format_bibtex(bibtex)
 {
-	return bibtex.replace('\n\n', '\n').replace('    \n', '\n').replace('    ', ' ').replace('\t', ' ').replace('\n', '\n  ').replace('\n  }', '\n}').replace('@InProceedings', '@inproceedings').trim();
+	return bibtex.replace(/\n\n/g, '\n').replace(/    \n/g, '\n').replace(/    /g, ' ').replace(/\t/g, ' ').replace(/\n/g, '\n  ').replace(/\n  }/g, '\n}').replace('@InProceedings', '@inproceedings').trim();
 }
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org/abs/' : arxiv, 'papers.nips.cc/paper/' : nips, 'openreview.net/forum' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org/content' : biorxiv, 'pnas.org/content' : pnas, 'papers.ssrn.com/sol3/papers.cfm' : ssrn, "projecteuclid.org" : projecteuclid, 'journals.aps.org' : aps};
+	const parsers = {'arxiv.org' : arxiv, 'nips.cc' : nips, 'openreview.net' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org' : biorxiv, 'pnas.org' : pnas, 'papers.ssrn.com' : ssrn, "projecteuclid.org" : projecteuclid, 'journals.aps.org' : aps, 'proceedings.mlr.press' : mlr, 'jmlr.org' : jmlr, 'eprint.iacr.org' : iacr};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);

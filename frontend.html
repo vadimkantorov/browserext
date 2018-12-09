@@ -1,18 +1,19 @@
-<div width="100%" style="display:flex; border-bottom: 1px solid">
+<div style="all:initial; display:flex; border-bottom: 1px solid;">
 	<style>
 		.zrxiv_save::after { content : "Save" }
 		.zrxiv_prevent_auto_save::after { content : "Prevent auto-save in " attr(data-zrxiv_auto_save_timeout) " seconds" }
 		.zrxiv_delete::after { content : "Delete" }
-		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add { white-space:nowrap }
+		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
 		#zrxiv_tags { margin-left: auto }
-		#zrxiv_tag_add { margin-left: 1em }
-		#zrxiv_tag {width:auto}
+		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px}
+		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
 		.zrxiv_checkbox {margin:4px}
+		.zrxiv_checkbox_label {display: inline}
 		.zrxiv_status_ok {background-color:lightgreen}
 		.zrxiv_status_working {background-color:yellow}
 		.zrxiv_status_error {background-color:red}
 	</style>
-	<template id="zrxiv_checkbox"><label class="zrxiv_nowrap"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
+	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
 	<button type="button" id="zrxiv_toggle" hidden><span>ℤ </span></button>
