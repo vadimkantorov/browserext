@@ -197,7 +197,7 @@ async function iacr(page, href, date)
 		if(p[i].innerText.includes('Category'))
 			break;
 
-		abstract += p[i].lastChild + ' ';
+		abstract += p[i].lastChild.textContent + ' ';
 	}
 	return {
 		title : page.querySelector('b').innerText,
