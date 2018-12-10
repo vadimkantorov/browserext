@@ -58,6 +58,8 @@ class ZrxivGithubBackend
 			await this.init_doc();
 			return this.del_doc(false);
 		}
+		else
+			this.sha = null;
 	}
 
 	async add_tag(tag, retry)
