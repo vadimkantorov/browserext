@@ -66,10 +66,7 @@ class ZrxivFrontend
 			this.ui.zrxiv_tags.style.display = 'inline';
 		}
 		else
-		{
-			[this.ui.zrxiv_tag, this.ui.zrxiv_tag_add, this.ui.zrxiv_tags].forEach(elem => {elem.hidden = true;});
 			this.ui.zrxiv_checkboxes().forEach(checkbox => {checkbox.checked = false;});
-		}
 	}
 
 	async document_action(action)
