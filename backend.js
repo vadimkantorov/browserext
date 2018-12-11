@@ -24,7 +24,7 @@ class ZrxivGithubBackend
 	{
 		this.doc = await parse_doc(document, this.href, Math.floor(new Date().getTime() / 1000));
 		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json');
-		if(resp.status == 200)
+		if(resp.ok)
 		{
 			const {content, sha} = await resp.json();
 			this.doc = JSON.parse(atob(content));
@@ -40,7 +40,7 @@ class ZrxivGithubBackend
 	async put_doc(message, sha, retry)
 	{
 		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
-		if(resp.status == 200 || resp.status == 201)
+		if(resp.ok)
 			this.sha = (await resp.json()).content.sha;
 		else if(resp.status == 409 && retry != false)
 		{
@@ -64,7 +64,7 @@ class ZrxivGithubBackend
 
 	async add_tag(tag, retry)
 	{
-		const resp = this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
+		const resp = await this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
 		if(resp.status == 409 && retry != false)
 		{
 			await delay(this.retry_delay_seconds);
