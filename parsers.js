@@ -4,7 +4,7 @@ async function arxiv(page, href, date)
 	const pdf = find_meta(page, 'citation_pdf_url');
 	return {
 		title : find_meta(page, 'citation_title'),
-		authors : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
+		authors : decomma_authors(find_meta(page, 'citation_author', Array)),
 		abstract : entry.querySelector('summary').innerText,
 		id : 'arxiv.' + find_meta(page, 'citation_arxiv_id').replace('/', '_'),
 		url : pdf.replace('/pdf/', '/abs/'),
@@ -51,10 +51,10 @@ async function openreview(page, href, date)
 
 async function cvf(page, href, date)
 {
-	const pdf = find_link_by_text(page, 'pdf');
+	const pdf = find_meta(page, 'citation_pdf_url');
 	return {
-		title : page.querySelector('#papertitle').innerText,
-		authors : page.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
+		title : find_meta(page, 'citation_title'),
+		authors : decomma_authors(find_meta(page, 'citation_author', Array)),
 		abstract : page.querySelector('#abstract').innerText,
 		id : 'cvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
 		url : href,
@@ -100,7 +100,7 @@ async function ssrn(page, href, date)
 	const doi = find_meta(page, 'citation_doi');
 	return {
 		title : find_meta(page, 'citation_title'),
-		authors : find_meta(page, 'citation_author', Array).map(author => author.split(', ').reverse().join(' ')),
+		authors : decomma_authors(find_meta(page, 'citation_author', Array)),
 		abstract : page.querySelector('.abstract-text>p').innerText,
 		id : doi.split('/')[1],
 		url : find_meta(page, 'citation_abstract_html_url'),
@@ -251,6 +251,11 @@ function find_link_by_text(page, text)
 function strip_version(doc_id)
 {
 	return new RegExp('(.+)(v.+)?', 'g').exec(doc_id)[1];
+}
+
+function decomma_authors(authors)
+{
+	return authors.map(a => a.split(', ').reverse().join(' '));
 }
 
 function format_bibtex(bibtex)

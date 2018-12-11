@@ -3,6 +3,11 @@ function base64_encode_utf8(str)
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {return String.fromCharCode(parseInt(p1, 16)) }));
 }
 
+function response_exception(resp)
+{
+	return new Error(`${resp.status}: ${resp.statusText}`);
+}
+
 class ZrxivGithubBackend
 {
 	constructor(github_username, github_repo, github_token, href)
@@ -30,6 +35,8 @@ class ZrxivGithubBackend
 			this.doc = JSON.parse(atob(content));
 			this.sha = sha;
 		}
+		else if(resp.status != 404)
+			throw response_exception(resp);
 	}
 
 	get_tags()
