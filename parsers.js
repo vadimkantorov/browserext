@@ -1,16 +1,14 @@
 async function arxiv(page, href, date)
 {
-	const xml = await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text();
-	const entry = page.createRange().createContextualFragment(xml).querySelector('entry');
-	const [match, category, id] = new RegExp('.+arxiv.org/abs/(.+/)?([^v]+)', 'g').exec(entry.querySelector('id').innerText);
-	const url = 'https://arxiv.org/abs/' + (category ? category + '/' + id : id)
+	const entry = page.createRange().createContextualFragment(await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text()).querySelector('entry');
+	const pdf = find_meta(page, 'citation_pdf_url');
 	return {
-		title : entry.querySelector('title').innerText, 
+		title : find_meta(page, 'citation_title'),
 		authors : Array.from(entry.querySelectorAll('author name')).map(elem => elem.innerText),
 		abstract : entry.querySelector('summary').innerText,
-		id : 'arxiv.' + (category ? category + '_' + id : id),
-		url : url,
-		pdf : url.replace('arxiv.org/abs/', 'arxiv.org/pdf/'),
+		id : 'arxiv.' + find_meta(page, 'citation_arxiv_id').replace('/', '_'),
+		url : pdf.replace('/pdf/', '/abs/'),
+		pdf : pdf,
 		source : 'arxiv.org',
 		date : date,
 		tags : []
@@ -19,16 +17,15 @@ async function arxiv(page, href, date)
 
 async function nips(page, href, date)
 {
-	const pdf = find_link_by_text(page, '[PDF]').replace('http://', 'https://');
-	const bibtex = find_link_by_text(page, '[BibTeX]').replace('http://', 'https://');
+	const pdf = find_meta(page, 'citation_pdf_url');
 	return {
-		title : page.querySelector('.subtitle').innerText,
-		authors : Array.from(page.querySelectorAll('.author')).map(elem => elem.innerText),
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
 		abstract : page.querySelector('.abstract').innerText,
 		id : 'neurips.' + new RegExp('/paper/(\\d+)-.+').exec(pdf)[1],
 		url : href,
 		pdf : pdf,
-		bibtex : format_bibtex(await (await fetch(bibtex).text())),
+		bibtex : format_bibtex(await (await fetch(find_link_by_text(page, '[BibTeX]').replace('http://', 'https://'))).text()),
 		source : 'nips.cc',
 		date : date,
 		tags : []
@@ -57,7 +54,7 @@ async function cvf(page, href, date)
 	const pdf = find_link_by_text(page, 'pdf');
 	return {
 		title : page.querySelector('#papertitle').innerText,
-		authors : document.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
+		authors : page.querySelector('#authors i').innerText.split(',').map(s => s.trim()),
 		abstract : page.querySelector('#abstract').innerText,
 		id : 'cvf.' + pdf.split('/').pop().replace('_paper.pdf', ''),
 		url : href,
@@ -152,7 +149,7 @@ async function aps(page, href, date)
 	}
 }
 
-function mlr(page, href, date)
+function pmlr(page, href, date)
 {
 	const url = find_meta(page, 'citation_abstract_html_url');
 	return {
@@ -263,7 +260,7 @@ function format_bibtex(bibtex)
 
 function parse_doc(page, href, date)
 {
-	const parsers = {'arxiv.org' : arxiv, 'nips.cc' : nips, 'openreview.net' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org' : biorxiv, 'pnas.org' : pnas, 'papers.ssrn.com' : ssrn, "projecteuclid.org" : projecteuclid, 'journals.aps.org' : aps, 'proceedings.mlr.press' : mlr, 'jmlr.org' : jmlr, 'eprint.iacr.org' : iacr};
+	const parsers = {'arxiv.org' : arxiv, 'nips.cc' : nips, 'openreview.net' : openreview, 'openaccess.thecvf.com' : cvf, 'hal.' : hal, 'biorxiv.org' : biorxiv, 'pnas.org' : pnas, 'papers.ssrn.com' : ssrn, "projecteuclid.org" : projecteuclid, 'journals.aps.org' : aps, 'proceedings.mlr.press' : pmlr, 'jmlr.org' : jmlr, 'eprint.iacr.org' : iacr};
 	for(const k in parsers)
 		if(href.includes(k))
 			return parsers[k](page, href, date);
