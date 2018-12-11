@@ -3,7 +3,7 @@ function base64_encode_utf8(str)
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {return String.fromCharCode(parseInt(p1, 16)) }));
 }
 
-function response_exception(resp)
+function network_error(resp)
 {
 	return new Error(`${resp.status}: ${resp.statusText}`);
 }
@@ -12,9 +12,9 @@ class ZrxivGithubBackend
 {
 	constructor(github_username, github_repo, github_token, href)
 	{
+		this.api = `https://api.github.com/repos/${github_username}/${github_repo}`;
+		this.auth_token = `${github_username}:${github_token}`;
 		this.href = href;
-		this.api = 'https://api.github.com/repos/' + github_username + '/' + github_repo;
-		this.auth_token = github_username + ':' + github_token;
 		this.doc = null;
 		this.sha = null;
 		this.retry_delay_seconds = 2;
@@ -28,7 +28,7 @@ class ZrxivGithubBackend
 	async init_doc()
 	{
 		this.doc = await parse_doc(document, this.href, Math.floor(new Date().getTime() / 1000));
-		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json');
+		const resp = await this.github_api_request(`/contents/data/documents/${this.doc.id}.json`);
 		if(resp.ok)
 		{
 			const {content, sha} = await resp.json();
@@ -36,17 +36,12 @@ class ZrxivGithubBackend
 			this.sha = sha;
 		}
 		else if(resp.status != 404)
-			throw response_exception(resp);
-	}
-
-	get_tags()
-	{
-		return this.github_api_request('/contents/data/tags');
+			throw network_error(resp);
 	}
 
 	async put_doc(message, sha, retry)
 	{
-		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
+		const resp = await this.github_api_request(`/contents/data/documents/${this.doc.id}.json`, 'put', Object.assign({message : message + this.doc.id, content : base64_encode_utf8(JSON.stringify(this.doc, null, 2))}, sha ? {sha : sha} : {}))
 		if(resp.ok)
 			this.sha = (await resp.json()).content.sha;
 		else if(resp.status == 409 && retry != false)
@@ -54,29 +49,40 @@ class ZrxivGithubBackend
 			await delay(this.retry_delay_seconds);
 			await this.put_doc(message, sha ? ((await this.init_doc()) || this.sha) : null, false);
 		}
+		else
+			throw network_error(resp);
 	}
 
 	async del_doc(retry)
 	{
-		const resp = await this.github_api_request('/contents/data/documents/' + this.doc.id + '.json', 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
-		if(resp.status == 409 && retry != false)
+		const resp = await this.github_api_request(`/contents/data/documents/${this.doc.id}.json`, 'delete', {message : 'Delete ' + this.doc.id, sha : this.sha})
+		if(resp.ok)
+			this.sha = null;
+		else if(resp.status == 409 && retry != false)
 		{
 			await delay(this.retry_delay_seconds);
 			await this.init_doc();
 			return this.del_doc(false);
 		}
 		else
-			this.sha = null;
+			throw network_error(resp);
 	}
 
 	async add_tag(tag, retry)
 	{
-		const resp = await this.github_api_request('/contents/data/tags/' + tag + '.md', 'put', {message : 'Create tag ' + tag, content : '' })
+		const resp = await this.github_api_request(`/contents/data/tags/${tag}.md`, 'put', {message : 'Create tag ' + tag, content : '' })
 		if(resp.status == 409 && retry != false)
 		{
 			await delay(this.retry_delay_seconds);
 			return this.add_tag(tag, false);
 		}
+		else if(!resp.ok)
+			throw network_error(resp);
+	}
+
+	get_tags()
+	{
+		return this.github_api_request('/contents/data/tags');
 	}
 
 	add_doc()
