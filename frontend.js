@@ -69,7 +69,7 @@ class ZrxivFrontend
 			this.ui.zrxiv_checkboxes().forEach(checkbox => {checkbox.checked = false;});
 	}
 
-	async document_action(action)
+	async document_action(action, arg)
 	{
 		switch(action)
 		{
@@ -104,6 +104,15 @@ class ZrxivFrontend
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete';
 				this.operation_status(null);
 				break;
+
+			case 'zrxiv_error':
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_refresh';
+				this.operation_status(arg.message, 'error')
+				break;
+
+			case 'zrxiv_refresh':
+				window.location.reload(true);
+				break;
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
@@ -123,7 +132,16 @@ class ZrxivFrontend
 			return;
 		}
 
-		const [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
+		try
+		{
+			var [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
+		}
+		catch(err)
+		{
+			this.document_action('zrxiv_error', err);
+			return;
+		}
+
 		this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 		if(this.backend.sha == null)
 		{
