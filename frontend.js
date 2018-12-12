@@ -20,7 +20,15 @@ class ZrxivFrontend
 		{
 			const tag = self.ui.zrxiv_tag.value;
 			self.operation_status('creating tag', true);
-			await self.backend.add_tag(tag);
+			try
+			{
+				await self.backend.add_tag(tag);
+			}
+			catch(err)
+			{
+				self.document_action('zrxiv_error', err);
+				return;
+			}
 			self.operation_status(null);
 			self.ui.zrxiv_tags.appendChild(self.render_tag(tag, true));
 			self.ui.zrxiv_tag.value = '';
@@ -41,7 +49,15 @@ class ZrxivFrontend
 		checkbox.checked = checked;
 		checkbox.addEventListener('click', function() {
 			self.operation_status('toggling tag ' + this.value, true);
-			self.backend.toggle_tag(this.value, this.checked);
+			try
+			{
+				self.backend.toggle_tag(this.value, this.checked);
+			}
+			catch(err)
+			{
+				self.document_action('zrxiv_error', err);
+				return;
+			}
 			self.operation_status(null);
 		});
 		return label;
