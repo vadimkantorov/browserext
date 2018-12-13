@@ -167,7 +167,8 @@ class ZrxivFrontend
 			{
 				await this.document_action('zrxiv_auto_save');
 				await delay(this.auto_save_timeout);
-				await this.document_action('zrxiv_save');
+				if(this.ui.zrxiv_toggle_status.className == 'zrxiv_prevent_auto_save')
+					await this.document_action('zrxiv_save');
 			}
 		}
 		else

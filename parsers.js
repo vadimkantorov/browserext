@@ -260,6 +260,14 @@ function decomma_authors(authors)
 
 function format_bibtex(bibtex)
 {
+	/*const entry_type_key = new RegExp(/\s*(@.+)\s*{\s*([^,]+)\s*,/, 'g');
+	const field = new RegExp(/(.+)/, 'g');
+	const [entry_type, key] = entry_type_key.exec(bibtex).slice(1);
+
+	bibtex = bibtex.replace(entry_type_key, '{')
+	bibtex = bibtex.replace(new RegExp(/\b(.+)\s*=/, 'g'), '$1 :');*/
+	// https://stackoverflow.com/questions/34221996/how-to-parse-complex-bibtex-items-with-javascript-and-regex
+	
 	return bibtex.replace(/\n\n/g, '\n').replace(/    \n/g, '\n').replace(/    /g, ' ').replace(/\t/g, ' ').replace(/\n/g, '\n  ').replace(/\n  }/g, '\n}').replace('@InProceedings', '@inproceedings').trim();
 }
 

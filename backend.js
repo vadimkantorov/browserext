@@ -111,7 +111,7 @@ class ZrxivGithubBackend
 			prevent_auto_save[this.doc.id] = true;
 			await browser.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
-		else if(action == true && prevent_auto_save.indexOf(this.doc.id) >= 0)
+		else if(action == true)
 		{
 			delete prevent_auto_save[this.doc.id];
 			await browser.storage.sync.set({prevent_auto_save : prevent_auto_save});
