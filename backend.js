@@ -117,4 +117,9 @@ class ZrxivGithubBackend
 			await browser.storage.sync.set({prevent_auto_save : prevent_auto_save});
 		}
 	}
+
+	is_anonymous_submission()
+	{
+		return this.doc != null && this.doc.authors.indexOf('Anonymous') >= 0;
+	}
 }

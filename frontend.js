@@ -137,7 +137,7 @@ class ZrxivFrontend
 	operation_status(status_text, status)
 	{
 		this.ui.zrxiv_toggle.title = status_text || 'ready';
-		this.ui.zrxiv_toggle.className = 'zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error');
+		this.ui.zrxiv_toggle.className = this.ui.zrxiv_tag_add.className = 'zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error');
 	}
 
 	async start()
@@ -161,7 +161,7 @@ class ZrxivFrontend
 		this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 		if(this.backend.sha == null)
 		{
-			if(!this.auto_save_timeout || await this.backend.auto_save())
+			if(!this.auto_save_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
 				await this.document_action('zrxiv_prevent_auto_save');
 			else
 			{

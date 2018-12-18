@@ -6,7 +6,7 @@
 		.zrxiv_refresh::after { content: "Error occurred. Please refresh the page." }
 		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
 		#zrxiv_tags { margin-left: auto }
-		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px; background-color: deepskyblue}
+		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px}
 		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
 		.zrxiv_checkbox {margin:4px}
 		.zrxiv_checkbox_label {display: inline}
@@ -17,8 +17,8 @@
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok" hidden><span>ℤ </span></button>
 	<div id="zrxiv_tags" hidden></div>
-	<button type="button" id="zrxiv_tag_add" hidden>Add a new tag:</button>
+	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" placeholder="(type in here)" hidden></input>
 </div>
