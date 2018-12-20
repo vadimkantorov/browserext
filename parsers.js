@@ -7,7 +7,7 @@ async function arxiv(page, href, date)
 	const title = find_meta(page, 'citation_title');
 	const year = find_meta(page, 'citation_date').split('/')[0]
 	const authors = decomma_authors(find_meta(page, 'citation_author', Array));
-	const bibtex = `@misc{${authors[0]}${year}${title.split(' ')[0]}_arXiv:${arxiv_id}, title = {${title}}, author = {${authors.join(', ')}}, year = {${year}}, eprint = {${arxiv_id}}, archivePrefix={arXiv}}`;
+	const bibtex = `@misc{${authors[0].split(' ').pop()}${year}_arXiv:${arxiv_id}, title = {${title}}, author = {${authors.join(', ')}}, year = {${year}}, eprint = {${arxiv_id}}, archivePrefix={arXiv}}`;
 	return {
 		title : title,
 		authors : authors,
@@ -289,7 +289,7 @@ function parse_bibtex(text)
 		const name = m[1];
 		const search = text.slice(m[0].length);
 		const re = /[\n\r,{}]/g;
-		const length = m[0].length;
+		let length = m[0].length;
 		let braceCount = 0;
 		do
 		{
@@ -304,7 +304,19 @@ function parse_bibtex(text)
 			}
 		}
 		while (braceCount > 0);
-		return [name, search.slice(0, re.lastIndex), length + re.lastIndex + m[0].length];
+		const value = search.slice(0, re.lastIndex);
+		length += re.lastIndex;
+
+		while(true)
+		{
+			m = re.exec(search);
+			if(m[0] != '{' && m[0] != '}')
+				length += m[0].length;
+			else
+				break;
+		}
+
+		return [name, value, length];
 	};
 
 	const m = text.match(/^\s*@([^{]+){\s*([^,\n]+)[,\n]/);
