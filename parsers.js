@@ -3,13 +3,19 @@ async function arxiv(page, href, date)
 	const entry = page.createRange().createContextualFragment(await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text()).querySelector('entry');
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const url = pdf.replace('/pdf/', '/abs/');
+	const arxiv_id = find_meta(page, 'citation_arxiv_id');
+	const title = find_meta(page, 'citation_title');
+	const year = find_meta(page, 'citation_date').split('/')[0]
+	const authors = decomma_authors(find_meta(page, 'citation_author', Array));
+	const bibtex = `@misc{${authors[0]}${year}${title.split(' ')[0]}_arXiv:${arxiv_id}, title = {${title}}, author = {${authors.join(', ')}}, year = {${year}}, eprint = {${arxiv_id}}, archivePrefix={arXiv}}`;
 	return {
-		title : find_meta(page, 'citation_title'),
-		authors : decomma_authors(find_meta(page, 'citation_author', Array)),
+		title : title,
+		authors : authors,
 		abstract : entry.querySelector('summary').innerText,
-		id : 'arxiv.' + find_meta(page, 'citation_arxiv_id').replace('/', '_'),
+		id : 'arxiv.' + arxiv_id.replace('/', '_'),
 		url : url,
 		pdf : pdf,
+		bibtex : format_bibtex(bibtex, url, pdf),
 		source : 'arxiv.org',
 		date : date,
 		tags : []
@@ -68,7 +74,6 @@ async function cvf(page, href, date)
 		source : 'thecvf.com',
 		date : date,
 		tags : [],
-
 		arxiv : find_link_by_text(page, 'arXiv')
 	}
 }
@@ -326,7 +331,7 @@ function format_bibtex(bibtex, url, pdf)
 		delete bib.abstract;
 		const header = ['title', 'author', 'booktitle', 'journal', 'year', 'doi'], footer = ['note', 'pdf', 'url'];
 		const keys = header.filter(k => bib.hasOwnProperty(k)).concat(Object.keys(bib).sort().filter(k => !header.includes(k) && !footer.includes(k))).concat(footer.filter(k => bib.hasOwnProperty(k)));
-		return `@${record_type}{${citation_key},\n` + keys.map(k => `  ${k} = ${bib[k]}`).join(',\n') + '\n}';
+		return `@${record_type}{${citation_key},\n` + keys.map(k => `    ${k} = ${bib[k]}`).join(',\n') + '\n}';
 	}
 	catch(ex)
 	{
