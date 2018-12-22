@@ -48,7 +48,7 @@ class ZrxivFrontend
 		checkbox.value = tag;
 		checkbox.checked = checked;
 		checkbox.addEventListener('click', async () => {
-			self.operation_status('toggling tag ' + this.value, true);
+			self.operation_status('toggling tag ' + this.value, this.backend.sha != null);
 			try
 			{
 				await self.backend.toggle_tag(this.value, this.checked);
@@ -140,7 +140,7 @@ class ZrxivFrontend
 		[this.ui.zrxiv_toggle, this.ui.zrxiv_tag_add].concat(this.ui.zrxiv_checkboxes_labels()).forEach(el =>
 		{
 			el.classList.remove(Array.from(el.classList).find(c => c.startsWith('zrxiv_status_')));
-			el.classList.add('zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error'));
+			el.classList.add('zrxiv_status_' + (status == true ? 'working' : (status == null || status == false) ? 'ok' : 'error'));
 		});
 	}
 
