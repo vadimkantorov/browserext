@@ -10,7 +10,7 @@ class ZrxivFrontend
 		else
 			this.backend = null;
 		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
-		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox') };
+		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')) };
 	}
 
 	bind()
@@ -47,11 +47,11 @@ class ZrxivFrontend
 		span.textContent = tag;
 		checkbox.value = tag;
 		checkbox.checked = checked;
-		checkbox.addEventListener('click', function() {
+		checkbox.addEventListener('click', async () => {
 			self.operation_status('toggling tag ' + this.value, true);
 			try
 			{
-				self.backend.toggle_tag(this.value, this.checked);
+				await self.backend.toggle_tag(this.value, this.checked);
 			}
 			catch(err)
 			{
@@ -137,7 +137,11 @@ class ZrxivFrontend
 	operation_status(status_text, status)
 	{
 		this.ui.zrxiv_toggle.title = status_text || 'ready';
-		this.ui.zrxiv_toggle.className = this.ui.zrxiv_tag_add.className = 'zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error');
+		[this.ui.zrxiv_toggle, this.ui.zrxiv_tag_add].concat(this.ui.zrxiv_checkboxes_labels()).forEach(el =>
+		{
+			el.classList.remove(Array.from(el.classList).find(c => c.startsWith('zrxiv_status_')));
+			el.classList.add('zrxiv_status_' + (status == true ? 'working' : status == null ? 'ok' : 'error'));
+		});
 	}
 
 	async start()
