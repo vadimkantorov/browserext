@@ -42,19 +42,18 @@ async function nips(page, href, date)
 
 async function openreview(page, href, date)
 {
-	//const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.original != null)[0];
 	const pdf = find_meta(page, 'citation_pdf_url');
+	const id = pdf.split('id=')[1];
 	const url = pdf.replace('/pdf', '/forum');
-	const abs = page.evaluate('//span[starts-with(text(), "Abstract: ")]', page).iterateNext().nextSibling.innerText;
-	const bibtex = page.querySelector('a[data-bibtex]').dataset.bibtex;
+	const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.id == id)[0].content;
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
-		abstract : abs,
-		id : 'openreview.' + pdf.split('id=')[1],
+		abstract : entry.asbtract,
+		id : 'openreview.' + id,
 		url : url,
 		pdf : pdf,
-		bibtex : format_bibtex(bibtex, url, pdf),
+		bibtex : format_bibtex(entry._bibtex, url, pdf),
 		source : 'openreview.net',
 		date : date,
 		tags : []
