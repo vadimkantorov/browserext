@@ -1,6 +1,6 @@
 async function arxiv(page, href, date)
 {
-	const entry = page.createRange().createContextualFragment(await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text()).querySelector('entry');
+	//const entry = page.createRange().createContextualFragment(await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text()).querySelector('entry');
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const url = pdf.replace('/pdf/', '/abs/');
 	const arxiv_id = find_meta(page, 'citation_arxiv_id');
@@ -11,7 +11,7 @@ async function arxiv(page, href, date)
 	return {
 		title : title,
 		authors : authors,
-		abstract : entry.querySelector('summary').innerText,
+		abstract : find_meta(page, {property : 'og:description'}),//entry.querySelector('summary').innerText,
 		id : 'arxiv.' + arxiv_id.replace('/', '_'),
 		url : url,
 		pdf : pdf,
@@ -42,17 +42,19 @@ async function nips(page, href, date)
 
 async function openreview(page, href, date)
 {
-	const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.original != null)[0];
+	//const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.original != null)[0];
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const url = pdf.replace('/pdf', '/forum');
+	const abs = page.evaluate('//span[starts-with(text(), "Abstract: ")]', page).iterateNext().nextSibling.innerText;
+	const bibtex = page.querySelector('a[data-bibtex]').dataset.bibtex;
 	return {
-		title : entry.content.title,
-		authors : entry.content.authors,
-		abstract : entry.content.abstract,
-		id : 'openreview.' + entry.id,
+		title : find_meta(page, 'citation_title'),
+		authors : find_meta(page, 'citation_author', Array),
+		abstract : abs,
+		id : 'openreview.' + pdf.split('id=')[1],
 		url : url,
 		pdf : pdf,
-		bibtex : format_bibtex(entry.content._bibtex, url, pdf),
+		bibtex : format_bibtex(bibtex, url, pdf),
 		source : 'openreview.net',
 		date : date,
 		tags : []
@@ -253,9 +255,15 @@ async function bibtex_crossref(doi)
 	return (await fetch('https://dx.doi.org/' + doi, { headers: {'Accept' : 'text/bibliography; style=bibtex'} } )).text();
 }
 
-function find_meta(page, text, type)
+function find_meta(page, name, type)
 {
-	const selector = 'meta[name="' + text + '"]';
+	let key = 'name', value = name;
+	if(typeof(name) != 'string')
+	{
+		key = Object.keys(name).pop();
+		value = name[key];
+	}
+	const selector = `meta[${key}="${value}"]`;
 	return type == Array ? Array.from(page.querySelectorAll(selector)).map(meta => meta.content) : page.querySelector(selector).content;
 }
 
@@ -266,7 +274,7 @@ function strip_doi_part(doi)
 
 function find_link_by_text(page, text)
 {
-	return page.evaluate('//a[text()="'+ text + '"]', page).iterateNext().href;
+	return page.evaluate(`//a[text()="${text}"]`, page).iterateNext().href;
 }
 
 function strip_version(doc_id)
@@ -338,7 +346,7 @@ function format_bibtex(bibtex, url, pdf)
 	try
 	{
 		let [record_type, citation_key, bib] = parse_bibtex(bibtex);
-		bib.url = bib.url || `{${url}}`;
+		bib.url = url;
 		bib.pdf = bib.pdf || `{${pdf}}`;
 		delete bib.abstract;
 		const header = ['title', 'author', 'booktitle', 'journal', 'year', 'doi'], footer = ['note', 'pdf', 'url'];
