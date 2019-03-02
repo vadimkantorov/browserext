@@ -10,6 +10,7 @@ class ZrxivFrontend
 		else
 			this.backend = null;
 		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
+		this.github_repo = options.zrxiv_github_repo;
 		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')) };
 	}
 
@@ -24,9 +25,9 @@ class ZrxivFrontend
 			{
 				await self.backend.add_tag(tag);
 			}
-			catch(err)
+			catch(exception)
 			{
-				self.document_action('zrxiv_error', err);
+				self.document_action('zrxiv_error', exception);
 				return;
 			}
 			self.operation_status(null);
@@ -53,9 +54,9 @@ class ZrxivFrontend
 			{
 				await self.backend.toggle_tag(this.value, this.checked);
 			}
-			catch(err)
+			catch(exception)
 			{
-				self.document_action('zrxiv_error', err);
+				self.document_action('zrxiv_error', exception);
 				return;
 			}
 			self.operation_status(null);
@@ -144,7 +145,7 @@ class ZrxivFrontend
 		});
 	}
 
-	async start()
+	async start(zrxiv_page)
 	{
 		if(!this.backend)
 		{
@@ -154,37 +155,49 @@ class ZrxivFrontend
 
 		try
 		{
-			var [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
+			if(zrxiv_page)
+				var tags = await this.backend.get_tags();
+			else
+				var [doc, tags] = await Promise.all([this.backend.init_doc(), this.backend.get_tags()]);
 		}
-		catch(err)
+		catch(exception)
 		{
-			this.document_action('zrxiv_error', err);
+			this.document_action('zrxiv_error', exception);
 			return;
 		}
 
-		this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
-		if(this.backend.sha == null)
+		this.render_tags(true, (this.backend.doc || {}).tags || [], (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
+
+		if(!zrxiv_page)
 		{
-			if(!this.auto_save_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
-				await this.document_action('zrxiv_prevent_auto_save');
-			else
+			if(this.backend.sha == null)
 			{
-				await this.document_action('zrxiv_auto_save');
-				await delay(this.auto_save_timeout);
-				if(this.ui.zrxiv_toggle_status.className == 'zrxiv_prevent_auto_save')
-					await this.document_action('zrxiv_save');
+				if(!this.auto_save_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
+					await this.document_action('zrxiv_prevent_auto_save');
+				else
+				{
+					await this.document_action('zrxiv_auto_save');
+					await delay(this.auto_save_timeout);
+					if(this.ui.zrxiv_toggle_status.className == 'zrxiv_prevent_auto_save')
+						await this.document_action('zrxiv_save');
+				}
 			}
+			else
+				await this.document_action('zrxiv_saved');
 		}
-		else
-			await this.document_action('zrxiv_saved');
 	}
 }
 
 (async () => {
 	let container = document.createRange().createContextualFragment(await (await fetch(browser.extension.getURL('frontend.html'))).text()).querySelector('div');
-	const target = document.getElementById('container') || document.body;
-	target.insertBefore(container, target.firstChild);
 	let frontend = new ZrxivFrontend(container, await browser.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
-	frontend.bind();
-	await frontend.start();
+	const zrxiv_page_url = frontend.github_repo.replace('http://', '').replace('https://', '').replace('github.com/', '').replace('/', '.github.io/');
+	const type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? 'zrxiv' : null) : 'provider';
+	if(type != null)
+	{
+		const target = document.getElementById('container') || document.body;
+		target.insertBefore(container, target.firstChild);
+		frontend.bind();
+		await frontend.start(type == 'zrxiv');
+	}
 })();
