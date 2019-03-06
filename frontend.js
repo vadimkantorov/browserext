@@ -130,6 +130,14 @@ class ZrxivFrontend
 			case 'zrxiv_refresh':
 				window.location.reload(true);
 				break;
+
+			case 'zrxiv':
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_selected';
+				break;
+
+			case 'zrxiv_import':
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_import_selected';
+				break;
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
@@ -166,10 +174,9 @@ class ZrxivFrontend
 			return;
 		}
 
-		this.render_tags(true, (this.backend.doc || {}).tags || [], (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
-
-		if(!zrxiv_page)
+		if(zrxiv_page == null)
 		{
+			this.render_tags(true, (this.backend.doc || {}).tags || [], (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 			if(this.backend.sha == null)
 			{
 				if(!this.auto_save_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
@@ -185,6 +192,10 @@ class ZrxivFrontend
 			else
 				await this.document_action('zrxiv_saved');
 		}
+		else
+		{
+			this.document_action(zrxiv_page);
+		}
 	}
 }
 
@@ -192,12 +203,12 @@ class ZrxivFrontend
 	let container = document.createRange().createContextualFragment(await (await fetch(browser.extension.getURL('frontend.html'))).text()).querySelector('div');
 	let frontend = new ZrxivFrontend(container, await browser.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
 	const zrxiv_page_url = frontend.github_repo.replace('http://', '').replace('https://', '').replace('github.com/', '').replace('/', '.github.io/');
-	const type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? 'zrxiv' : null) : 'provider';
+	const type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? (window.location.href.includes('/import') ? 'zrxiv_import' : 'zrxiv') : null) : 'provider';
 	if(type != null)
 	{
 		const target = document.getElementById('container') || document.body;
 		target.insertBefore(container, target.firstChild);
 		frontend.bind();
-		await frontend.start(type == 'zrxiv');
+		await frontend.start(type);
 	}
 })();
