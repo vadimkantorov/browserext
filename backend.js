@@ -25,9 +25,9 @@ class ZrxivGithubBackend
 		return fetch(this.api + relative_url, Object.assign({method : method || 'get', headers : Object.assign({Authorization : 'Basic ' + btoa(this.auth_token)}, body != null ? {'Content-Type' : 'application/json'} : {})}, body != null ? {body : JSON.stringify(body)} : {}));
 	}
 
-	async init_doc()
+	async init_doc(id)
 	{
-		this.doc = await parse_doc(document, this.href, Math.floor(new Date().getTime() / 1000));
+		this.doc = id == null ? await parse_doc(document, this.href, Math.floor(new Date().getTime() / 1000)) : {id : id};
 		const resp = await this.github_api_request(`/contents/data/documents/${this.doc.id}.json`);
 		if(resp.ok)
 		{

@@ -45,11 +45,11 @@ async function openreview(page, href, date)
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const id = pdf.split('id=')[1];
 	const url = pdf.replace('/pdf', '/forum');
-	const entry = (await (await fetch(href.replace('/forum?id=', '/notes?forum='))).json()).notes.filter(note => note.id == id)[0].content;
+	const entry = (await (await fetch(href.replace('/forum?', '/notes?'))).json()).notes.filter(note => note.id == id)[0].content;
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
-		abstract : entry.asbtract,
+		abstract : entry.abstract,
 		id : 'openreview.' + id,
 		url : url,
 		pdf : pdf,

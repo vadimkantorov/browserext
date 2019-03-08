@@ -9,9 +9,9 @@ class ZrxivFrontend
 		}
 		else
 			this.backend = null;
-		this.auto_save_timeout = options.zrxiv_auto_save_timeout;
+		this.operation_timeout = options.zrxiv_auto_save_timeout;
 		this.github_repo = options.zrxiv_github_repo;
-		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')) };
+		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs') };
 	}
 
 	bind()
@@ -37,7 +37,7 @@ class ZrxivFrontend
 		});
 		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(self.ui.zrxiv_toggle_status.className); } );
 		self.ui.zrxiv_tag.addEventListener('keyup', function(event) { if (event.keyCode == 13) self.ui.zrxiv_tag_add.click(); });
-		self.ui.zrxiv_toggle_status.dataset.zrxiv_auto_save_timeout = self.auto_save_timeout.toString();
+		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
 	}
 
 	render_tag(tag, checked)
@@ -138,6 +138,40 @@ class ZrxivFrontend
 			case 'zrxiv_import':
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_import_selected';
 				break;
+
+			case 'zrxiv_delete_selected':
+				const docs = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
+
+				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = (0).toString();
+				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_count = docs.length.toString();
+				this.ui.zrxiv_toggle_status.dataset.abort = false.toString();
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_prevent_delete';
+				await delay(this.operation_timeout);
+
+				for(let i = 1; i <= docs.length && this.ui.zrxiv_toggle_status.dataset.abort == false.toString(); i++)
+				{
+					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
+					this.ui.zrxiv_toggle_status.className = 'zrxiv_deleting';
+					this.operation_status('deleting', true);
+					await delay(this.operation_timeout);
+					await this.backend.init_doc(docs[i - 1]);
+					await this.backend.del_doc();
+					await this.backend.auto_save(false);
+					this.operation_status(null);
+					this.backend.doc = null;
+					this.ui.zrxiv_deleted_docs.value += ' ' + docs[i - 1];
+					this.ui.zrxiv_deleted_docs.dispatchEvent(new Event('change'));
+				}
+				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
+				await delay(this.operation_timeout);
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_selected';
+				break;
+
+			case 'zrxiv_deleting':
+			case 'zrxiv_prevent_delete':
+				this.ui.zrxiv_toggle_status.dataset.abort = true.toString();
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_aborted';
+				break;
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
@@ -176,15 +210,15 @@ class ZrxivFrontend
 
 		if(zrxiv_page == null)
 		{
-			this.render_tags(true, (this.backend.doc || {}).tags || [], (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
+			this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 			if(this.backend.sha == null)
 			{
-				if(!this.auto_save_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
+				if(!this.operation_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
 					await this.document_action('zrxiv_prevent_auto_save');
 				else
 				{
 					await this.document_action('zrxiv_auto_save');
-					await delay(this.auto_save_timeout);
+					await delay(this.operation_timeout);
 					if(this.ui.zrxiv_toggle_status.className == 'zrxiv_prevent_auto_save')
 						await this.document_action('zrxiv_save');
 				}
@@ -192,10 +226,8 @@ class ZrxivFrontend
 			else
 				await this.document_action('zrxiv_saved');
 		}
-		else
-		{
+		else 
 			this.document_action(zrxiv_page);
-		}
 	}
 }
 
@@ -203,8 +235,8 @@ class ZrxivFrontend
 	let container = document.createRange().createContextualFragment(await (await fetch(browser.extension.getURL('frontend.html'))).text()).querySelector('div');
 	let frontend = new ZrxivFrontend(container, await browser.storage.sync.get({zrxiv_github_repo: null, zrxiv_github_token: null, zrxiv_auto_save_timeout: null}), window.location.href);
 	const zrxiv_page_url = frontend.github_repo.replace('http://', '').replace('https://', '').replace('github.com/', '').replace('/', '.github.io/');
-	const type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? (window.location.href.includes('/import') ? 'zrxiv_import' : 'zrxiv') : null) : 'provider';
-	if(type != null)
+	const type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? (window.location.href.includes('/import') ? 'zrxiv_import' : 'zrxiv') : 'zrxiv_unknown') : null;
+	if(type != 'zrxiv_unknown')
 	{
 		const target = document.getElementById('container') || document.body;
 		target.insertBefore(container, target.firstChild);
