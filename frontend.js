@@ -11,7 +11,7 @@ class ZrxivFrontend
 			this.backend = null;
 		this.operation_timeout = options.zrxiv_auto_save_timeout;
 		this.github_repo = options.zrxiv_github_repo;
-		this.ui = { zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs') };
+		this.ui = { zrxiv : container, zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_hide_show : container.querySelector('#zrxiv_hide_show'), zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs') };
 	}
 
 	bind()
@@ -38,6 +38,24 @@ class ZrxivFrontend
 		self.ui.zrxiv_toggle.addEventListener('click', function() { self.document_action(self.ui.zrxiv_toggle_status.className); } );
 		self.ui.zrxiv_tag.addEventListener('keyup', function(event) { if (event.keyCode == 13) self.ui.zrxiv_tag_add.click(); });
 		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
+		self.ui.zrxiv_hide_show.addEventListener('click', function() {
+			if(self.ui.zrxiv_hide_show_status.className == 'zrxiv_hide_show_hide')
+			{
+				self.ui.zrxiv_hide_show_status.className = 'zrxiv_hide_show_show';
+				self.ui.zrxiv.classList.remove('zrxiv_show');
+				self.ui.zrxiv_tags.classList.add('zrxiv_hide_show_hidden');
+				self.ui.zrxiv_tag_add.classList.add('zrxiv_hide_show_hidden');
+				self.ui.zrxiv_tag.classList.add('zrxiv_hide_show_hidden');
+			}
+			else
+			{
+				self.ui.zrxiv_hide_show_status.className = 'zrxiv_hide_show_hide';
+				self.ui.zrxiv.classList.add('zrxiv_show');
+				self.ui.zrxiv_tags.classList.remove('zrxiv_hide_show_hidden');
+				self.ui.zrxiv_tag_add.classList.remove('zrxiv_hide_show_hidden');
+				self.ui.zrxiv_tag.classList.remove('zrxiv_hide_show_hidden');
+			}
+		});
 	}
 
 	render_tag(tag, checked)
@@ -175,6 +193,7 @@ class ZrxivFrontend
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
+		this.ui.zrxiv_hide_show.hidden = false;
 	}
 
 	operation_status(status_text, status)
@@ -228,6 +247,7 @@ class ZrxivFrontend
 		}
 		else 
 			this.document_action(zrxiv_page);
+
 	}
 }
 

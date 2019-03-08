@@ -1,4 +1,4 @@
-<div style="all:initial; display:flex; border-bottom: 1px solid; background-color:aquamarine; position: absolute; width: 100%; opacity: 0.9; top: 0px; z-index: 999999">
+<div id="zrxiv" style="all:initial; display:flex; border-bottom: 1px solid; background-color:aquamarine; position: absolute; opacity: 0.9; top: 0px; z-index: 999999" class="zrxiv_show">
 	<style>
 		.zrxiv_save::after { content : "Save" }
 		.zrxiv_prevent_auto_save::after { content : "Prevent auto-save in " attr(data-zrxiv_operation_timeout) " seconds" }
@@ -10,6 +10,8 @@
 		.zrxiv_delete_ok::after { content : "Deleting " attr(data-zrxiv_operation_doc_count) " documents completed. Please wait 5-10 minutes for effect and page update." }
 		.zrxiv_delete_aborted::after { content: "Deleted " attr(data-zrxiv_operation_doc_idx) " documents. Further deletion aborted." }
 		.zrxiv_import_selected::after { content: "Import selected documents" }
+		.zrxiv_subscribe::after { content: "Subscribe" }
+		.zrxiv_unsubscribe::after { content: "Unsubscribe" }
 
 		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
 		#zrxiv_tags { margin-left: auto }
@@ -20,11 +22,18 @@
 		.zrxiv_status_ok {background-color:lightgreen}
 		.zrxiv_status_working {background-color:yellow}
 		.zrxiv_status_error {background-color:red}
+
+		.zrxiv_show {width: 100% !important}
+		.zrxiv_hide_show_hide::after {content: "Hide"}
+		.zrxiv_hide_show_show::after {content: "Show"}
+		.zrxiv_hide_show_hidden { display : none !important}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
 	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_hide_show" hidden><span class="zrxiv_hide_show_hide">ℤ </span></button>
+
 	<div id="zrxiv_tags" hidden></div>
 	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" placeholder="(type in here)" hidden></input>
