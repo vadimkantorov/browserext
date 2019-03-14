@@ -298,13 +298,13 @@ function format_bibtex(bibtex, url, pdf)
 
 	try
 	{
-		let bib = Bibtex.parse(bibtex)[0];
+		let bib = ZrxivBibtex.parse(bibtex)[0];
 		if(url)
 			bib.url = url;
 		if(pdf || bib.pdf)
 			bib.pdf = bib.pdf || `{${pdf}}`;
 		delete bib.abstract;
-		return Bibtex.format([bib])
+		return ZrxivBibtex.format([bib])
 	}
 	catch(exception)
 	{

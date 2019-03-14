@@ -1,4 +1,4 @@
-Bibtex =
+ZrxivBibtex =
 {
 	parse : function(text)
 	{
