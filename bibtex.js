@@ -51,10 +51,8 @@ ZrxivBibtex =
 			while (text[0] !== '}')
 			{
 				let [field, value, length] = parse_bibtex_line(text);
-				while(value.startsWith('{'))
-					value = value.slice(1);
-				while(value.endsWith('}'))
-					value = value.slice(0, -1);
+				while(value.startsWith('{') && value.endsWith('}'))
+					value = value.slice(1, -1);
 				bib[field.toLowerCase()] = value;
 				text = text.slice(length).trim();
 			}

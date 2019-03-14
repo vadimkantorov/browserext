@@ -193,7 +193,8 @@ class ZrxivFrontend
 
 			case 'zrxiv_import_selected':
 				const bibtex = this.ui.zrxiv_bibtex_selected.title;
-				console.log(bibtex)
+				const bibs = ZrxivBibtex.parse(bibtex);
+				console.log(bibs);
 				break;
 		}
 			
