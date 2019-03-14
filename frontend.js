@@ -11,7 +11,7 @@ class ZrxivFrontend
 			this.backend = null;
 		this.operation_timeout = options.zrxiv_auto_save_timeout;
 		this.github_repo = options.zrxiv_github_repo;
-		this.ui = { zrxiv : container, zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_hide_show : container.querySelector('#zrxiv_hide_show'), zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs') };
+		this.ui = { zrxiv : container, zrxiv_tag_add : container.querySelector('#zrxiv_tag_add'), zrxiv_tag : container.querySelector('#zrxiv_tag'), zrxiv_tags : container.querySelector('#zrxiv_tags'), zrxiv_toggle : container.querySelector('#zrxiv_toggle'), zrxiv_hide_show : container.querySelector('#zrxiv_hide_show'), zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs'), zrxiv_bibtex_selected : document.querySelector('#zrxiv_bibtex_selected') };
 	}
 
 	bind()
@@ -189,6 +189,11 @@ class ZrxivFrontend
 			case 'zrxiv_prevent_delete':
 				this.ui.zrxiv_toggle_status.dataset.abort = true.toString();
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_aborted';
+				break;
+
+			case 'zrxiv_import_selected':
+				const bibtex = this.ui.zrxiv_bibtex_selected.title;
+				console.log(bibtex)
 				break;
 		}
 			

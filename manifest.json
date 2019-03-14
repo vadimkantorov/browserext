@@ -10,7 +10,7 @@
 		{
 			"matches": ["*://*.github.io/*", "*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*", "*://papers.ssrn.com/sol3/papers.cfm?abstract_id=*", "*://projecteuclid.org/*", "*://journals.aps.org/*/abstract/*", "*://proceedings.mlr.press/*/*.html", "*://www.jmlr.org/*/*.html", "*://jmlr.org/*/*.html", "*://eprint.iacr.org/*/*"],
 			"exclude_matches" : ["*://papers.nips.cc/paper/*.pdf", "*://hal.archives-ouvertes.fr/hal-*/document", "*://hal.inria.fr/hal-*/document", "*://projecteuclid.org/download/pdf*", "*://*.github.io/*/*.txt", "*://*.github.io/*/*.json", "*://*.github.io/*/*.bib"],
-			"js": ["browserext.js", "parsers.js", "backend.js", "frontend.js"],
+			"js": ["browserext.js", "bibtex.js", "parsers.js", "backend.js", "frontend.js"],
 			"all_frames": true
 		}
 	],
@@ -19,7 +19,7 @@
 		"default_title": "Open zrxiv",
 		"default_icon" : {"256" : "logo.png", "40" : "logo.png"}
 	},
-	"web_accessible_resources": ["frontend.html", "options.html", "parsers.js", "backend.js", "frontend.js", "options.js"],
+	"web_accessible_resources": ["frontend.html", "options.html", "bibtex.js", "parsers.js", "backend.js", "frontend.js", "options.js"],
 	"options_ui" : {"page" : "options.html", "open_in_tab" : false, "browser_style" : true},
 	"options_page" : "options.html",
 	"homepage_url" : "https://github.com/zrxiv/zrxiv",

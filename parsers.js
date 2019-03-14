@@ -1,6 +1,6 @@
 async function arxiv(page, href, date)
 {
-	//const entry = page.createRange().createContextualFragment(await (await fetch(href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list='))).text()).querySelector('entry');
+	const api = href.replace('arxiv.org/abs/', 'export.arxiv.org/api/query?id_list=');
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const url = pdf.replace('/pdf/', '/abs/');
 	const arxiv_id = find_meta(page, 'citation_arxiv_id');
@@ -11,14 +11,15 @@ async function arxiv(page, href, date)
 	return {
 		title : title,
 		authors : authors,
-		abstract : find_meta(page, {property : 'og:description'}),//entry.querySelector('summary').innerText,
+		abstract : find_meta(page, {property : 'og:description'}),
 		id : 'arxiv.' + arxiv_id.replace('/', '_'),
 		url : url,
 		pdf : pdf,
 		bibtex : format_bibtex(bibtex, url, pdf),
 		source : 'arxiv.org',
 		date : date,
-		tags : []
+		tags : [],
+		api : api
 	};
 }
 
@@ -42,10 +43,11 @@ async function nips(page, href, date)
 
 async function openreview(page, href, date)
 {
+	const api = href.replace('/forum?', '/notes?');
 	const pdf = find_meta(page, 'citation_pdf_url');
 	const id = pdf.split('id=')[1];
 	const url = pdf.replace('/pdf', '/forum');
-	const entry = (await (await fetch(href.replace('/forum?', '/notes?'))).json()).notes.filter(note => note.id == id)[0].content;
+	const entry = (await (await fetch(api)).json()).notes.filter(note => note.id == id)[0].content;
 	return {
 		title : find_meta(page, 'citation_title'),
 		authors : find_meta(page, 'citation_author', Array),
@@ -56,7 +58,8 @@ async function openreview(page, href, date)
 		bibtex : format_bibtex(entry._bibtex, url, pdf),
 		source : 'openreview.net',
 		date : date,
-		tags : []
+		tags : [],
+		api : api
 	}
 }
 
@@ -81,7 +84,8 @@ async function cvf(page, href, date)
 
 async function hal(page, href, date)
 {
-	const entry = (await (await fetch(href + (href.endsWith('/') ? '' : '/') + 'json')).json()).response.docs[0];
+	const api = href + (href.endsWith('/') ? '' : '/') + 'json';
+	const entry = (await (await fetch(api)).json()).response.docs[0];
 	const url = entry.uri_s;
 	const pdf = entry.files_s[0];
 	return {
@@ -94,7 +98,8 @@ async function hal(page, href, date)
 		bibtex : format_bibtex(entry.label_bibtex, url, pdf),
 		source : 'hal.archives-ouvertes.fr',
 		date : date,
-		tags : []
+		tags : [],
+		api : api
 	}
 }
 
@@ -286,75 +291,24 @@ function decomma_authors(authors)
 	return authors.map(a => a.split(', ').reverse().join(' '));
 }
 
-function parse_bibtex(text)
-{
-	const parse_bibtex_line = function(text)
-	{
-		let m = text.match(/^\s*(\S+?)\s*=\s*/);
-		if (!m) 
-			throw new Error('Unrecogonised line format');
-		const name = m[1];
-		const search = text.slice(m[0].length);
-		const re = /[\n\r,{}]/g;
-		let length = m[0].length;
-		let braceCount = 0;
-		do
-		{
-			m = re.exec(search);
-			if (m[0] === '{')
-				braceCount++;
-			else if (m[0] === '}')
-			{
-				if (braceCount ===  0)
-					throw new Error('Unexpected closing brace: "}"');
-				braceCount--;
-			}
-		}
-		while (braceCount > 0);
-		const value = search.slice(0, re.lastIndex);
-		length += re.lastIndex;
-
-		while(true)
-		{
-			m = re.exec(search);
-			if(m[0] != '{' && m[0] != '}')
-				length += m[0].length;
-			else
-				break;
-		}
-
-		return [name, value, length];
-	};
-
-	const m = text.match(/^\s*@([^{]+){\s*([^,\n]+)[,\n]/);
-	if (!m) 
-		throw new Error('Unrecogonised header format');
-	text = text.slice(m[0].length).trim();
-	let bib = {};
-	while (text[0] !== '}')
-	{
-		const [field, value, length] = parse_bibtex_line(text);
-		bib[field.toLowerCase()] = value;
-		text = text.slice(length).trim();
-	}
-	return [m[1].trim().toLowerCase(), m[2].trim().toLowerCase(), bib];
-}
-
 function format_bibtex(bibtex, url, pdf)
 {
+	if(!bibtex)
+		return null;
+
 	try
 	{
-		let [record_type, citation_key, bib] = parse_bibtex(bibtex);
-		bib.url = url;
-		bib.pdf = bib.pdf || `{${pdf}}`;
+		let bib = Bibtex.parse(bibtex)[0];
+		if(url)
+			bib.url = url;
+		if(pdf || bib.pdf)
+			bib.pdf = bib.pdf || `{${pdf}}`;
 		delete bib.abstract;
-		const header = ['title', 'author', 'booktitle', 'journal', 'year', 'doi'], footer = ['note', 'pdf', 'url'];
-		const keys = header.filter(k => bib.hasOwnProperty(k)).concat(Object.keys(bib).sort().filter(k => !header.includes(k) && !footer.includes(k))).concat(footer.filter(k => bib.hasOwnProperty(k)));
-		return `@${record_type}{${citation_key},\n` + keys.map(k => `    ${k} = ${bib[k]}`).join(',\n') + '\n}';
+		return Bibtex.format([bib])
 	}
-	catch(ex)
+	catch(exception)
 	{
-		console.log('bibtex parsing error', ex.message);
+		console.log('bibtex parsing error', exception.message);
 		return bibtex;
 	}
 }
