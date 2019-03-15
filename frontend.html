@@ -2,14 +2,22 @@
 	<style>
 		.zrxiv_save::after { content : "Save" }
 		.zrxiv_prevent_auto_save::after { content : "Prevent auto-save in " attr(data-zrxiv_operation_timeout) " seconds" }
-		.zrxiv_delete::after { content : "Delete" }
 		.zrxiv_refresh::after { content: "Error occurred. Please refresh the page." }
+
+		.zrxiv_delete::after { content : "Delete" }
 		.zrxiv_delete_selected::after { content : "Delete selected documents" }
 		.zrxiv_prevent_delete::after { content : "Prevent deleting selected documents in " attr(data-zrxiv_operation_timeout) " seconds" }
 		.zrxiv_deleting::after { content : "Deleting document " attr(data-zrxiv_operation_doc_idx) " out of " attr(data-zrxiv_operation_doc_count) " (click to abort)"}
 		.zrxiv_delete_ok::after { content : "Deleting " attr(data-zrxiv_operation_doc_count) " documents completed. Please wait 5-10 minutes for effect and page update." }
 		.zrxiv_delete_aborted::after { content: "Deleted " attr(data-zrxiv_operation_doc_idx) " documents. Further deletion aborted." }
-		.zrxiv_import_selected::after { content: "Import selected documents" }
+
+		.zrxiv_import::after { content : "Import" }
+		.zrxiv_import_selected::after { content : "Import selected documents" }
+		.zrxiv_prevent_import::after { content : "Prevent importing selected documents in " attr(data-zrxiv_operation_timeout) " seconds" }
+		.zrxiv_importing::after { content : "Importing document " attr(data-zrxiv_operation_doc_idx) " out of " attr(data-zrxiv_operation_doc_count) " (click to abort)"}
+		.zrxiv_import_ok::after { content : "Importing " attr(data-zrxiv_operation_doc_count) " documents completed. Please wait 5-10 minutes for effect and page update." }
+		.zrxiv_import_aborted::after { content: "Importd " attr(data-zrxiv_operation_doc_idx) " documents. Further import aborted." }
+
 		.zrxiv_subscribe::after { content: "Subscribe" }
 		.zrxiv_unsubscribe::after { content: "Unsubscribe" }
 

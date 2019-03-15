@@ -80,6 +80,22 @@ class ZrxivGithubBackend
 			throw network_error(resp);
 	}
 
+	async del_tag(tag)
+	{
+		const tag_url = `/contents/data/documents/${tag}.md`;
+		let resp = await this.github_api_request(tag_url);
+		if(resp.ok)
+			resp = await this.github_api_request(tag_url, 'delete', {message : 'Delete tag ' + tag, sha : (await resp.json()).sha});
+
+		if(resp.status == 409 && retry != false)
+		{
+			await delay(this.retry_delay_seconds);
+			return this.del_tag(tag, false);
+		}
+		else if(!resp.ok)
+			throw network_error(resp);
+	}
+
 	get_tags()
 	{
 		return this.github_api_request('/contents/data/tags');

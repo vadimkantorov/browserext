@@ -155,6 +155,8 @@ class ZrxivFrontend
 
 			case 'zrxiv_import':
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_import_selected';
+				this.backend.doc = {tags : []};
+				this.render_tags(true);
 				break;
 
 			case 'zrxiv_delete_selected':
@@ -171,14 +173,13 @@ class ZrxivFrontend
 					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
 					this.ui.zrxiv_toggle_status.className = 'zrxiv_deleting';
 					this.operation_status('deleting', true);
-					await delay(this.operation_timeout);
 					await this.backend.init_doc(docs[i - 1]);
 					await this.backend.del_doc();
 					await this.backend.auto_save(false);
 					this.operation_status(null);
-					this.backend.doc = null;
-					this.ui.zrxiv_deleted_docs.value += ' ' + docs[i - 1];
+					this.ui.zrxiv_deleted_docs.value += ' ' + this.backend.doc.id;
 					this.ui.zrxiv_deleted_docs.dispatchEvent(new Event('change'));
+					this.backend.doc = null;
 				}
 				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
 				await delay(this.operation_timeout);
@@ -192,10 +193,41 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_import_selected':
-				const bibtex = this.ui.zrxiv_bibtex_selected.title;
-				const bibs = ZrxivBibtex.parse(bibtex);
-				console.log(bibs);
+				const bibs = ZrxivBibtex.parse(this.ui.zrxiv_bibtex_selected.title);
+
+				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = (0).toString();
+				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_count = bibs.length.toString();
+				this.ui.zrxiv_toggle_status.dataset.abort = false.toString();
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_prevent_import';
+				await delay(this.operation_timeout);
+
+				const tags = this.backend.doc.tags;
+				for(let i = 1; i <= bibs.length && this.ui.zrxiv_toggle_status.dataset.abort == false.toString(); i++)
+				{
+					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
+					this.ui.zrxiv_toggle_status.className = 'zrxiv_importing';
+					this.operation_status('importing', true);
+					await delay(this.operation_timeout);
+					this.backend.sha = null;
+					this.backend.doc = bibs[i - 1];
+					this.backend.doc.tags = Array.from(new Set((this.backend.doc.tags || []).concat(tags))).sort();
+					await this.backend.add_doc();
+					this.operation_status(null);
+					this.ui.zrxiv_imported_docs.value += ' ' + this.backend.doc.id;
+					this.ui.zrxiv_imported_docs.dispatchEvent(new Event('change'));
+					this.backend.doc = {tags : tags};
+				}
+				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_import_aborted' : 'zrxiv_import_ok';
+				await delay(this.operation_timeout);
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_import_selected';
 				break;
+
+			case 'zrxiv_importing':
+			case 'zrxiv_prevent_import':
+				this.ui.zrxiv_toggle_status.dataset.abort = true.toString();
+				this.ui.zrxiv_toggle_status.className = 'zrxiv_import_aborted';
+				break;
+
 		}
 			
 		this.ui.zrxiv_toggle.hidden = false;
@@ -233,9 +265,9 @@ class ZrxivFrontend
 			return;
 		}
 
+		this.render_tags(zrxiv_page == null, zrxiv_page == null ? this.backend.doc.tags : [], (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 		if(zrxiv_page == null)
 		{
-			this.render_tags(true, this.backend.doc.tags, (tags.status == 200 ? await tags.json() : []).map(x => x.name.split('.').slice(0, -1).join('.')));
 			if(this.backend.sha == null)
 			{
 				if(!this.operation_timeout || await this.backend.auto_save() || this.backend.is_anonymous_submission())
