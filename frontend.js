@@ -11,6 +11,7 @@ class ZrxivFrontend
 			this.backend = null;
 		this.operation_timeout = options.zrxiv_auto_save_timeout;
 		this.github_repo = options.zrxiv_github_repo;
+		this.home_page = document.querySelector('link[rel=base]').href;
 		this.ui =
 		{
 			zrxiv : container, 
@@ -177,6 +178,8 @@ class ZrxivFrontend
 				}
 				this.operation_status(null);
 				this.ui.zrxiv_delete_tag_button_status.className = 'zrxiv_delete_tag_ok';
+				await delay(this.operation_timeout);
+				window.location.href = this.home_page;
 				break;
 
 			case 'zrxiv_auto_save':
