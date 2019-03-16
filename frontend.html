@@ -18,13 +18,16 @@
 		.zrxiv_import_ok::after { content : "Importing " attr(data-zrxiv_operation_doc_count) " documents completed. Please wait 5-10 minutes for effect and page update." }
 		.zrxiv_import_aborted::after { content: "Importd " attr(data-zrxiv_operation_doc_idx) " documents. Further import aborted." }
 
+		.zrxiv_delete_tag::after { content: "Delete tag #" attr(data-tag) }
+		.zrxiv_delete_tag_ok::after { content: "Deleting tag #" attr(data-tag) " completed. Please wait 5 minutes for page updates." }
+		
+		.zrxiv_delete_from_tag::after { content: "Delete selected documents from tag #" attr(data-tag) }
+
 		.zrxiv_subscribe::after { content: "Subscribe" }
 		.zrxiv_unsubscribe::after { content: "Unsubscribe" }
 
+		.zrxiv_push_right {margin-left: auto !important }
 		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
-		#zrxiv_tags { margin-left: auto }
-		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px}
-		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
 		.zrxiv_checkbox {margin:4px}
 		.zrxiv_checkbox_label {display: inline}
 		.zrxiv_status_ok {background-color:lightgreen}
@@ -35,6 +38,12 @@
 		.zrxiv_hide_show_hide::after {content: "Hide"}
 		.zrxiv_hide_show_show::after {content: "Show"}
 		.zrxiv_hide_show_hidden { display : none !important}
+
+		#zrxiv_tags { margin-left: auto }
+		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px}
+		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
+		#zrxiv_delete_tag_button {margin-left: auto}
+		#zrxiv_delete_from_tag_button {margin-left:1em}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
@@ -43,6 +52,8 @@
 	<button type="button" id="zrxiv_hide_show" hidden><span class="zrxiv_hide_show_hide">ℤ </span></button>
 
 	<div id="zrxiv_tags" hidden></div>
+	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok" hidden><span class="zrxiv_delete_tag"></span></button>
+	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok" hidden><span class="zrxiv_delete_from_tag"></span></button>
 	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" placeholder="(type in here)" hidden></input>
 </div>

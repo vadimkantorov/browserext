@@ -82,7 +82,7 @@ class ZrxivGithubBackend
 
 	async del_tag(tag)
 	{
-		const tag_url = `/contents/data/documents/${tag}.md`;
+		const tag_url = `/contents/data/tags/${tag}.md`;
 		let resp = await this.github_api_request(tag_url);
 		if(resp.ok)
 			resp = await this.github_api_request(tag_url, 'delete', {message : 'Delete tag ' + tag, sha : (await resp.json()).sha});
