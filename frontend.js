@@ -11,7 +11,7 @@ class ZrxivFrontend
 			this.backend = null;
 		this.operation_timeout = options.zrxiv_auto_save_timeout;
 		this.github_repo = options.zrxiv_github_repo;
-		this.home_page = document.querySelector('link[rel=base]').href;
+		this.home_page = document.baseURI;
 		this.ui =
 		{
 			zrxiv : container, 
