@@ -48,12 +48,12 @@
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok zrxiv_status" hidden><span>ℤ </span></button>
 	<button type="button" id="zrxiv_hide_show" hidden><span class="zrxiv_hide_show_hide">ℤ </span></button>
 
-	<div id="zrxiv_tags" hidden></div>
-	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok" hidden><span class="zrxiv_delete_tag"></span></button>
-	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok" hidden><span class="zrxiv_delete_from_tag"></span></button>
-	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok" hidden>Add a new tag:</button>
-	<input type="text" id="zrxiv_tag" placeholder="(type in here)" hidden></input>
+	<div id="zrxiv_tags" class="zrxiv_hide_show" hidden></div>
+	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden><span class="zrxiv_delete_tag"></span></button>
+	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden><span class="zrxiv_delete_from_tag"></span></button>
+	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden>Add a new tag:</button>
+	<input type="text" id="zrxiv_tag" class="zrxiv_hide_show" placeholder="(type in here)" hidden></input>
 </div>

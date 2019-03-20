@@ -19,17 +19,22 @@ class ZrxivFrontend
 			zrxiv_tag : container.querySelector('#zrxiv_tag'), 
 			zrxiv_tags : container.querySelector('#zrxiv_tags'), 
 			zrxiv_toggle : container.querySelector('#zrxiv_toggle'), 
-			zrxiv_hide_show : container.querySelector('#zrxiv_hide_show'), 
-			zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), 
 			zrxiv_checkbox : container.querySelector('#zrxiv_checkbox'), 
 			zrxiv_options_missing : container.querySelector('#zrxiv_options_missing'), 
 			zrxiv_toggle_status : container.querySelector('#zrxiv_toggle>span'), 
 			zrxiv_checkboxes : () => container.querySelectorAll('.zrxiv_checkbox'), 
 			zrxiv_checkboxes_labels : () => Array.from(container.querySelectorAll('.zrxiv_checkbox_label')), 
+
 			zrxiv_delete_tag_button : container.querySelector('#zrxiv_delete_tag_button'), 
 			zrxiv_delete_tag_button_status : container.querySelector('#zrxiv_delete_tag_button>span'), 
 			zrxiv_delete_from_tag_button : container.querySelector('#zrxiv_delete_from_tag_button'), 
 			zrxiv_delete_from_tag_button_status : container.querySelector('#zrxiv_delete_from_tag_button>span'),
+
+			zrxiv_hide_show : container.querySelector('#zrxiv_hide_show'), 
+			zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), 
+			zrxiv_hide_show_elements : Array.from(container.querySelectorAll('.zrxiv_hide_show')),
+
+			zrxiv_status_elements : Array.from(container.querySelectorAll('.zrixv_status')), 
  
 			zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), 
 			zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs'), 
@@ -42,6 +47,7 @@ class ZrxivFrontend
 		const self = this;
 		self.ui.zrxiv_tag_add.onclick = async () => self.document_action('zrxiv_add_tag', self.ui.zrxiv_tag.value);
 		self.ui.zrxiv_delete_tag_button.onclick = async () => self.document_action('zrxiv_delete_tag');
+		self.ui.zrxiv_delete_from_tag_button.onclick = async () => self.document_action('zrxiv_delete_selected_from_tag');
 		self.ui.zrxiv_toggle.onclick = async() => self.document_action(self.ui.zrxiv_toggle_status.className);
 		self.ui.zrxiv_tag.onkeyup = e => e.keyCode != 13 || self.ui.zrxiv_tag_add.click();
 		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
@@ -51,13 +57,13 @@ class ZrxivFrontend
 			{
 				self.ui.zrxiv_hide_show_status.className = 'zrxiv_hide_show_show';
 				self.ui.zrxiv.classList.remove('zrxiv_show');
-				[self.ui.zrxiv_tags, self.ui.zrxiv_tag_add, self.ui.zrxiv_tag, self.ui.zrxiv_delete_tag_button, self.ui.zrxiv_delete_from_tag_button].forEach(elem => elem.classList.add('zrxiv_hide_show_hidden'));
+				self.ui.zrxiv_hide_show_elements.forEach(elem => elem.classList.add('zrxiv_hide_show_hidden'));
 			}
 			else
 			{
 				self.ui.zrxiv_hide_show_status.className = 'zrxiv_hide_show_hide';
 				self.ui.zrxiv.classList.add('zrxiv_show');
-				[self.ui.zrxiv_tags, self.ui.zrxiv_tag_add, self.ui.zrxiv_tag, self.ui.zrxiv_delete_tag_button, self.ui.zrxiv_delete_from_tag_button].forEach(elem => elem.classList.remove('zrxiv_hide_show_hidden'));
+				self.ui.zrxiv_hide_show_elements.forEach(elem => elem.classList.remove('zrxiv_hide_show_hidden'));
 			}
 		};
 	}
@@ -212,21 +218,29 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_delete_selected':
-				const docs = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
+				const selected_docs = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
 
 				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = (0).toString();
-				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_count = docs.length.toString();
+				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_count = selected_docs.length.toString();
 				this.ui.zrxiv_toggle_status.dataset.abort = false.toString();
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_prevent_delete';
 				await delay(this.operation_timeout);
 
-				for(let i = 1; i <= docs.length && this.ui.zrxiv_toggle_status.dataset.abort == false.toString(); i++)
+				for(let i = 1; i <= selected_docs.length && this.ui.zrxiv_toggle_status.dataset.abort == false.toString(); i++)
 				{
 					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
 					this.ui.zrxiv_toggle_status.className = 'zrxiv_deleting';
 					this.operation_status('deleting', true);
-					await this.backend.init_doc(docs[i - 1]);
-					await this.backend.del_doc();
+					await this.backend.init_doc(selected_docs[i - 1]);
+					try
+					{
+						await this.backend.del_doc();
+					}
+					catch(exception)
+					{
+						this.document_action('zrxiv_error', exception);
+						return;
+					}
 					await this.backend.auto_save(false);
 					this.operation_status(null);
 					this.ui.zrxiv_deleted_docs.value += ' ' + this.backend.doc.id;
@@ -236,6 +250,39 @@ class ZrxivFrontend
 				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
 				await delay(this.operation_timeout);
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_selected';
+				break;
+
+			case 'zrxiv_delete_selected_from_tag':
+				const selected_docs_ = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
+
+				this.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_doc_idx = (0).toString();
+				this.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_doc_count = selected_docs_.length.toString();
+				this.ui.zrxiv_delete_from_tag_button_status.dataset.abort = false.toString();
+				this.ui.zrxiv_delete_from_tag_button_status.className = 'zrxiv_prevent_delete';
+				await delay(this.operation_timeout);
+
+				for(let i = 1; i <= selected_docs_.length && this.ui.zrxiv_delete_from_tag_button_status.dataset.abort == false.toString(); i++)
+				{
+					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
+					this.ui.zrxiv_toggle_status.className = 'zrxiv_deleting';
+					this.operation_status('deleting', true);
+					await this.backend.init_doc(selected_docs_[i - 1]);
+					try
+					{
+						await this.backend.toggle_tag(this.ui.zrxiv_delete_from_tag_button_status.dataset.tag, false);
+					}
+					catch(exception)
+					{
+						this.document_action('zrxiv_error', exception);
+						return;
+					}
+					this.operation_status(null);
+					this.backend.doc = null;
+				}
+				
+				this.ui.zrxiv_delete_from_tag_button_status.className = (this.ui.zrxiv_delete_from_tag_button_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
+				await delay(this.operation_timeout);
+				this.ui.zrxiv_delete_from_tag_button_status.className = 'zrxiv_delete_selected';
 				break;
 
 			case 'zrxiv_import_selected':
@@ -300,7 +347,7 @@ class ZrxivFrontend
 	operation_status(status_text, status)
 	{
 		this.ui.zrxiv_toggle.title = status_text || 'ready';
-		[this.ui.zrxiv_toggle, this.ui.zrxiv_tag_add, this.ui.zrxiv_delete_tag_button, this.ui.zrxiv_delete_from_tag_button].concat(this.ui.zrxiv_checkboxes_labels()).forEach(el =>
+		this.ui.zrxiv_status_elements.concat(this.ui.zrxiv_checkboxes_labels()).forEach(el =>
 		{
 			el.classList.remove(Array.from(el.classList).find(c => c.startsWith('zrxiv_status_')));
 			el.classList.add('zrxiv_status_' + (status == true ? 'working' : (status == null || status == false) ? 'ok' : 'error'));
@@ -360,7 +407,7 @@ class ZrxivFrontend
 		zrxiv_page_url += '/';
 	let page_type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? 'zrxiv_' + window.location.href.split(zrxiv_page_url).pop().split('?')[0] : 'zrxiv_unknown') : null;
 	
-	if(page_type.endsWith('/'))
+	if(page_type != null && page_type.endsWith('/'))
 		page_type = page_type.slice(0, -1);
 
 	if(page_type != 'zrxiv_unknown')
