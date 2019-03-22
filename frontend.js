@@ -34,7 +34,7 @@ class ZrxivFrontend
 			zrxiv_hide_show_status : container.querySelector('#zrxiv_hide_show>span'), 
 			zrxiv_hide_show_elements : Array.from(container.querySelectorAll('.zrxiv_hide_show')),
 
-			zrxiv_status_elements : Array.from(container.querySelectorAll('.zrixv_status')), 
+			zrxiv_status_elements : Array.from(container.querySelectorAll('.zrxiv_status')), 
  
 			zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), 
 			zrxiv_deleted_docs : document.querySelector('#zrxiv_deleted_docs'), 
@@ -46,11 +46,11 @@ class ZrxivFrontend
 	{
 		const self = this;
 		self.ui.zrxiv_tag_add.onclick = async () => self.document_action('zrxiv_add_tag', self.ui.zrxiv_tag.value);
-		self.ui.zrxiv_delete_tag_button.onclick = async () => self.document_action('zrxiv_delete_tag');
-		self.ui.zrxiv_delete_from_tag_button.onclick = async () => self.document_action('zrxiv_delete_selected_from_tag');
-		self.ui.zrxiv_toggle.onclick = async() => self.document_action(self.ui.zrxiv_toggle_status.className);
+		self.ui.zrxiv_delete_tag_button.onclick = async e => self.document_action(self.ui.zrxiv_delete_tag_button_status.className, e.target);
+		self.ui.zrxiv_delete_from_tag_button.onclick = async e => self.document_action(self.ui.zrxiv_delete_from_tag_button_status.className, e.target);
+		self.ui.zrxiv_toggle.onclick = async e => self.document_action(self.ui.zrxiv_toggle_status.className, e.target);
 		self.ui.zrxiv_tag.onkeyup = e => e.keyCode != 13 || self.ui.zrxiv_tag_add.click();
-		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
+		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
 		self.ui.zrxiv_hide_show.onclick = () => 
 		{
 			if(self.ui.zrxiv_hide_show_status.className == 'zrxiv_hide_show_hide')
@@ -218,6 +218,7 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_delete_selected':
+				{
 				const selected_docs = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
 
 				this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = (0).toString();
@@ -250,26 +251,28 @@ class ZrxivFrontend
 				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
 				await delay(this.operation_timeout);
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_selected';
+				}
 				break;
 
 			case 'zrxiv_delete_selected_from_tag':
-				const selected_docs_ = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
-
-				this.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_doc_idx = (0).toString();
-				this.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_doc_count = selected_docs_.length.toString();
-				this.ui.zrxiv_delete_from_tag_button_status.dataset.abort = false.toString();
-				this.ui.zrxiv_delete_from_tag_button_status.className = 'zrxiv_prevent_delete';
+				{
+				const selected_docs = this.ui.zrxiv_doc_header.dataset.selected.split(' ');
+				const button = this.ui.zrxiv_delete_from_tag_button_status;
+				button.dataset.zrxiv_operation_doc_idx = (0).toString();
+				button.dataset.zrxiv_operation_doc_count = selected_docs.length.toString();
+				button.dataset.abort = false.toString();
+				button.className = 'zrxiv_prevent_delete';
 				await delay(this.operation_timeout);
 
-				for(let i = 1; i <= selected_docs_.length && this.ui.zrxiv_delete_from_tag_button_status.dataset.abort == false.toString(); i++)
+				for(let i = 1; i <= selected_docs.length && button.dataset.abort == false.toString(); i++)
 				{
-					this.ui.zrxiv_toggle_status.dataset.zrxiv_operation_doc_idx = i.toString();
-					this.ui.zrxiv_toggle_status.className = 'zrxiv_deleting';
+					button.dataset.zrxiv_operation_doc_idx = i.toString();
+					button.className = 'zrxiv_deleting';
 					this.operation_status('deleting', true);
-					await this.backend.init_doc(selected_docs_[i - 1]);
+					await this.backend.init_doc(selected_docs[i - 1]);
 					try
 					{
-						await this.backend.toggle_tag(this.ui.zrxiv_delete_from_tag_button_status.dataset.tag, false);
+						await this.backend.toggle_tag(button.dataset.tag, false);
 					}
 					catch(exception)
 					{
@@ -280,9 +283,10 @@ class ZrxivFrontend
 					this.backend.doc = null;
 				}
 				
-				this.ui.zrxiv_delete_from_tag_button_status.className = (this.ui.zrxiv_delete_from_tag_button_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
+				button.className = (button.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
 				await delay(this.operation_timeout);
-				this.ui.zrxiv_delete_from_tag_button_status.className = 'zrxiv_delete_selected';
+				button.className = 'zrxiv_delete_selected_from_tag';
+				}
 				break;
 
 			case 'zrxiv_import_selected':
@@ -317,8 +321,8 @@ class ZrxivFrontend
 
 			case 'zrxiv_deleting':
 			case 'zrxiv_prevent_delete':
-				this.ui.zrxiv_toggle_status.dataset.abort = true.toString();
-				this.ui.zrxiv_toggle_status.className = 'zrxiv_delete_aborted';
+				arg.dataset.abort = true.toString();
+				arg.className = 'zrxiv_delete_aborted';
 				break;
 
 			case 'zrxiv_importing':

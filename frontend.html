@@ -21,7 +21,7 @@
 		.zrxiv_delete_tag::after { content: "Delete tag #" attr(data-tag) }
 		.zrxiv_delete_tag_ok::after { content: "Deleting tag #" attr(data-tag) " completed. Please wait 5 minutes for page updates." }
 		
-		.zrxiv_delete_from_tag::after { content: "Delete selected documents from tag #" attr(data-tag) }
+		.zrxiv_delete_selected_from_tag::after { content: "Delete selected documents from tag #" attr(data-tag) }
 
 		.zrxiv_subscribe::after { content: "Subscribe" }
 		.zrxiv_unsubscribe::after { content: "Unsubscribe" }
@@ -29,7 +29,7 @@
 		.zrxiv_push_right {margin-left: auto !important }
 		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
 		.zrxiv_checkbox {margin:4px}
-		.zrxiv_checkbox_label {display: inline}
+		.zrxiv_checkbox_label {display: inline!important; font-weight:normal!important}
 		.zrxiv_status_ok {background-color:lightgreen}
 		.zrxiv_status_working {background-color:yellow}
 		.zrxiv_status_error {background-color:red}
@@ -44,16 +44,18 @@
 		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
 		#zrxiv_delete_tag_button {margin-left: auto}
 		#zrxiv_delete_from_tag_button {margin-left:1em}
+
+		.zrxiv_reset {padding: initial!important; line-height: normal!important; letter-spacing: normal!important}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok zrxiv_status" hidden><span>ℤ </span></button>
-	<button type="button" id="zrxiv_hide_show" hidden><span class="zrxiv_hide_show_hide">ℤ </span></button>
+	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok zrxiv_status zrxiv_reset" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_hide_show" hidden class="zrxiv_reset"><span class="zrxiv_hide_show_hide">ℤ </span></button>
 
 	<div id="zrxiv_tags" class="zrxiv_hide_show" hidden></div>
-	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden><span class="zrxiv_delete_tag"></span></button>
-	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden><span class="zrxiv_delete_from_tag"></span></button>
-	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show" hidden>Add a new tag:</button>
+	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden><span class="zrxiv_delete_tag"></span></button>
+	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden><span class="zrxiv_delete_selected_from_tag"></span></button>
+	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" class="zrxiv_hide_show" placeholder="(type in here)" hidden></input>
 </div>

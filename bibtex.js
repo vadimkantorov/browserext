@@ -87,5 +87,25 @@ ZrxivBibtex =
 		const exclude_keys = ['bibtex_record_type', 'bibtex_citation_key', 'authors', 'abstract'];
 		const header = ['title', 'author', 'booktitle', 'journal', 'year', 'doi'], footer = ['note', 'pdf', 'url'];
 		return bibs.map(bib => `@${bib.bibtex_record_type}{${bib.bibtex_citation_key},\n` + header.filter(k => bib.hasOwnProperty(k)).concat(Object.keys(bib).sort().filter(k => !header.includes(k) && !footer.includes(k))).concat(footer.filter(k => bib.hasOwnProperty(k))).filter(k => !exclude_keys.includes(k)).map(k => `    ${k} = {${bib[k]}}`).join(',\n') + '\n}').join('\n\n');
+	},
+
+	sanitize_abstract : function(abs)
+	{
+		return abs.replace(/\s+/g, ' ').trim();
+	},
+
+	sanitize_url : function(url)
+	{
+		while(url.startsWith('{') && url.endsWith('}'))
+			url = url.slice(1, -1);
+		const prefix = '\\url';
+		if(url.startsWith(prefix))
+			url = url.slice(prefix.length);
+		while(url.startsWith('{') && url.endsWith('}'))
+			url = url.slice(1, -1);
+	},
+
+	sanitize_author : function(author)
+	{
 	}
 };
