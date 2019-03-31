@@ -153,7 +153,7 @@ class ZrxivFrontend
 				break;
 
 			case 'zrxiv_add_tag':
-				this.operation_status('creating tag', true);
+				this.operation_status('creating tag', true, this.ui.zrxiv_tag_add);
 				try
 				{
 					await this.backend.add_tag(arg);
@@ -163,7 +163,7 @@ class ZrxivFrontend
 					this.document_action('zrxiv_error', exception);
 					return;
 				}
-				this.operation_status(null);
+				this.operation_status(null, null, this.ui.zrxiv_tag_add);
 				this.ui.zrxiv_tags.appendChild(this.render_tag(arg, true));
 				this.ui.zrxiv_tag.value = '';
 				//this.ui.zrxiv_tags.lastChild.firstChild.click();
