@@ -46,16 +46,19 @@
 		#zrxiv_delete_from_tag_button {margin-left:1em}
 
 		.zrxiv_reset {padding: initial!important; line-height: normal!important; letter-spacing: normal!important}
+		.zrxiv_reset_button {color : buttontext!important }
+		.zrxiv_reset_button_neutral {background-color: buttonface!important}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
 
 	<span id="zrxiv_options_missing" hidden>zrxiv is not set up yet. Please go to extension options and enter your Github access information. Thanks!</span>
-	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok zrxiv_status zrxiv_reset" hidden><span>ℤ </span></button>
-	<button type="button" id="zrxiv_hide_show" hidden class="zrxiv_reset"><span class="zrxiv_hide_show_hide">ℤ </span></button>
+	<button type="button" id="zrxiv_toggle" class="zrxiv_status_ok zrxiv_status zrxiv_reset zrxiv_reset_button" hidden><span>ℤ </span></button>
+	<button type="button" id="zrxiv_hide_show" hidden class="zrxiv_reset zrxiv_reset_button zrxiv_reset_button_neutral"><span class="zrxiv_hide_show_hide">ℤ </span></button>
 
 	<div id="zrxiv_tags" class="zrxiv_hide_show" hidden></div>
-	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden><span class="zrxiv_delete_tag"></span></button>
-	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden><span class="zrxiv_delete_selected_from_tag"></span></button>
-	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset" hidden>Add a new tag:</button>
+	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden><span class="zrxiv_delete_tag"></span></button>
+	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden><span class="zrxiv_delete_selected_from_tag"></span></button>
+	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden>Add a new tag:</button>
 	<input type="text" id="zrxiv_tag" class="zrxiv_hide_show" placeholder="(type in here)" hidden></input>
+	<textarea id="zrxiv_deleted_docs" style="display:none"></textarea>
 </div>

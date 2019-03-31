@@ -9,12 +9,19 @@ ZrxivBibtex =
 				throw new Error('Unrecogonised line format');
 			const name = m[1];
 			const search = text.slice(m[0].length);
-			const re = /[\n\r,{}]/g;
+			const re = /[\n\r,{}"]/g;
 			let length = m[0].length;
-			let braceCount = 0;
+			let braceCount = 0, quoteCount = 0;
 			do
 			{
 				m = re.exec(search);
+				if(braceCount == 0 && m[0] === '"')
+				{
+					if(quoteCount > 0)
+						quoteCount--;
+					else
+						quoteCount++;
+				}
 				if (m[0] === '{')
 					braceCount++;
 				else if (m[0] === '}')
@@ -24,14 +31,14 @@ ZrxivBibtex =
 					braceCount--;
 				}
 			}
-			while (braceCount > 0);
+			while (braceCount + quoteCount > 0);
 			const value = search.slice(0, re.lastIndex);
 			length += re.lastIndex;
 
 			while(true)
 			{
 				m = re.exec(search);
-				if(m[0] != '{' && m[0] != '}')
+				if(m[0] != '{' && m[0] != '}' && m[0] != '"')
 					length += m[0].length;
 				else
 					break;
@@ -53,6 +60,8 @@ ZrxivBibtex =
 				let [field, value, length] = parse_bibtex_line(text);
 				while(value.startsWith('{') && value.endsWith('}'))
 					value = value.slice(1, -1);
+				while(value.startsWith('"') && value.endsWith('"'))
+					value = value.slice(1, -1);
 				bib[field.toLowerCase()] = value;
 				text = text.slice(length).trim();
 			}
@@ -68,7 +77,7 @@ ZrxivBibtex =
 					let splitted = author.split(',');
 					author = splitted.slice(1).join(' ') + ' ' + splitted[0];
 				}
-				return author;
+				return author.trim();
 			});
 			delete bib.author;
 			bibs.push(bib);
