@@ -448,7 +448,7 @@ class ZrxivFrontend
 	let zrxiv_page_url = frontend.github_repo.replace('http://', '').replace('https://', '').replace('github.com/', '').replace('/', '.github.io/');
 	if(!zrxiv_page_url.endsWith('/'))
 		zrxiv_page_url += '/';
-	let page_type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? 'zrxiv_' + window.location.href.split(zrxiv_page_url).pop().split('?')[0] : 'zrxiv_unknown') : null;
+	let page_type = window.location.hostname.endsWith('.github.io') ? (window.location.href.includes(zrxiv_page_url) ? 'zrxiv_' + window.location.href.split(zrxiv_page_url).pop().split('#')[0].split('?')[0] : 'zrxiv_unknown') : null;
 	
 	if(page_type != null && page_type.endsWith('/'))
 		page_type = page_type.slice(0, -1);

@@ -30,9 +30,9 @@
 		.zrxiv_nowrap, #zrxiv_toggle, #zrxiv_tag_add, #zrxiv_checkbox>label { white-space:nowrap }
 		.zrxiv_checkbox {margin:4px}
 		.zrxiv_checkbox_label {display: inline!important; font-weight:normal!important}
-		.zrxiv_status_ok {background-color:lightgreen}
-		.zrxiv_status_working {background-color:yellow}
-		.zrxiv_status_error {background-color:red}
+		.zrxiv_status_ok, .zrxiv_status_ok:hover {background-color:lightgreen}
+		.zrxiv_status_working, .zrxiv_status_working:hover {background-color:yellow}
+		.zrxiv_status_error, .zrxiv_status_error:hover {background-color:red}
 
 		.zrxiv_show {width: 100% !important}
 		.zrxiv_hide_show_hide::after {content: "Hide"}
@@ -46,7 +46,7 @@
 		#zrxiv_delete_from_tag_button {margin-left:1em}
 
 		.zrxiv_reset {padding: initial!important; line-height: normal!important; letter-spacing: normal!important}
-		.zrxiv_reset_button {color : buttontext!important }
+		.zrxiv_reset_button {color : buttontext!important; margin:0px!important; /*border-color:buttonface!important*/ }
 		.zrxiv_reset_button_neutral {background-color: buttonface!important}
 	</style>
 	<template id="zrxiv_checkbox"><label class="zrxiv_checkbox_label zrxiv_status_ok"><input type="checkbox" class="zrxiv_checkbox"></input><span></span></label></template>
