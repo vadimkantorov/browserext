@@ -40,12 +40,12 @@
 		.zrxiv_hide_show_hidden { display : none !important}
 
 		#zrxiv_tags { margin-left: auto }
-		#zrxiv_tag_add { margin-left: 1em; margin-right: 0px}
-		#zrxiv_tag {width:auto; height: inherit; margin: 0px}
-		#zrxiv_delete_tag_button {margin-left: auto}
-		#zrxiv_delete_from_tag_button {margin-left:1em}
+		#zrxiv_tag_add { margin-left: 1em!important; margin-right: 0px!important}
+		#zrxiv_tag {width:auto!important; height: inherit!important; margin: 0px!important}
+		#zrxiv_delete_tag_button {margin-left: auto!important}
+		#zrxiv_delete_from_tag_button {margin-left:1em!important}
 
-		.zrxiv_reset {padding: initial!important; line-height: normal!important; letter-spacing: normal!important}
+		.zrxiv_reset {padding: 0px!important; line-height: normal!important; letter-spacing: normal!important}
 		.zrxiv_reset_button {color : buttontext!important; margin:0px!important; /*border-color:buttonface!important*/ }
 		.zrxiv_reset_button_neutral {background-color: buttonface!important}
 	</style>
@@ -59,6 +59,6 @@
 	<button type="button" id="zrxiv_delete_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden><span class="zrxiv_delete_tag"></span></button>
 	<button type="button" id="zrxiv_delete_from_tag_button" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden><span class="zrxiv_delete_selected_from_tag"></span></button>
 	<button type="button" id="zrxiv_tag_add" class="zrxiv_status_ok zrxiv_status zrxiv_hide_show zrxiv_reset zrxiv_reset_button" hidden>Add a new tag:</button>
-	<input type="text" id="zrxiv_tag" class="zrxiv_hide_show" placeholder="(type in here)" hidden></input>
+	<input type="text" id="zrxiv_tag" class="zrxiv_hide_show zrxiv_reset" placeholder="(type in here)" hidden></input>
 	<textarea id="zrxiv_deleted_docs" style="display:none"></textarea>
 </div>
