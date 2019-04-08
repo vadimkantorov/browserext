@@ -9,7 +9,7 @@
 	"content_scripts": [
 		{
 			"matches": ["*://*.github.io/*", "*://arxiv.org/abs/*", "*://papers.nips.cc/paper/*", "*://openreview.net/forum?id=*", "*://openaccess.thecvf.com/content_*/html/*.html", "*://hal.archives-ouvertes.fr/hal-*", "*://hal.inria.fr/hal-*", "*://www.biorxiv.org/content/*","*://www.pnas.org/content/*", "*://papers.ssrn.com/sol3/papers.cfm?abstract_id=*", "*://projecteuclid.org/*", "*://journals.aps.org/*/abstract/*", "*://proceedings.mlr.press/*/*.html", "*://proceedings.mlr.press/*/*", "*://www.jmlr.org/*/*.html", "*://jmlr.org/*/*.html", "*://eprint.iacr.org/*/*"],
-			"exclude_matches" : ["*://papers.nips.cc/paper/*.pdf", "*://proceedings.mlr.press/*/*.pdf", "*://hal.archives-ouvertes.fr/hal-*/document", "*://hal.inria.fr/hal-*/document", "*://projecteuclid.org/download/pdf*", "*://*.github.io/*/*.txt", "*://*.github.io/*/*.json", "*://*.github.io/*/*.bib"],
+			"exclude_matches" : ["*://papers.nips.cc/paper/*.pdf", "*://proceedings.mlr.press/*/*.pdf", "*://*.pnas.org/*.pdf", "*://hal.archives-ouvertes.fr/hal-*/document", "*://hal.inria.fr/hal-*/document", "*://projecteuclid.org/download/pdf*", "*://*.github.io/*/*.txt", "*://*.github.io/*/*.json", "*://*.github.io/*/*.bib"],
 			"js": ["browserext.js", "bibtex.js", "parsers.js", "backend.js", "frontend.js"],
 			"all_frames": true
 		}
