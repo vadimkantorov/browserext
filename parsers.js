@@ -302,7 +302,7 @@ function format_bibtex(bibtex, url, pdf)
 		if(url)
 			bib.url = url;
 		if(pdf || bib.pdf)
-			bib.pdf = bib.pdf || `{${pdf}}`;
+			bib.pdf = bib.pdf || pdf;
 		delete bib.abstract;
 		return ZrxivBibtex.format([bib])
 	}
