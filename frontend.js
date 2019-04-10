@@ -381,7 +381,7 @@ class ZrxivFrontend
 	operation_status(status_text, status, origin)
 	{
 		const all = this.ui.zrxiv_status_elements.concat(this.ui.zrxiv_checkboxes_labels());
-		origin = origin || this.ui.zrxiv_toggle_status;
+		origin = origin || this.ui.zrxiv_toggle;
 
 		[origin].forEach(el =>
 		{
