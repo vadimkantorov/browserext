@@ -12,7 +12,7 @@ function mark_deleted_docs()
 	if(docs.length > 0)
 		document.querySelectorAll(docs.map(doc => `li[data-id="${doc}"]`).join(',')).forEach(li => {
 			li.title = 'Document is being deleted';
-			li.classList.add('doc-deleted');
+			li.classList.add('zrxiv_doc_deleted');
 			const checkbox = li.querySelector('input[type=checkbox]');
 			checkbox.checked = false;
 			checkbox.disabled = true;
