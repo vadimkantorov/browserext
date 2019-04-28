@@ -1,47 +1,3 @@
-function mark_deleted()
-{
-	const deleted = read_deleted();
-	const deleted_docs = deleted.filter(d => !d.endsWith('/'));
-	const deleted_tags = deleted.filter(d => d.endsWith('/'));
-
-	if(deleted_docs.length > 0)
-	{
-		document.querySelectorAll(deleted_docs.map(d => 'li[data-id-qualified' + (d.startsWith('/') ? '$' : '') + `="${d}"]`).join(',')).forEach(li => {
-			li.title = 'Document is being deleted';
-			li.classList.add('zrxiv_deleted');
-			const checkbox = li.querySelector('input[type=checkbox]');
-			checkbox.checked = false;
-			checkbox.disabled = true;
-		});
-	}
-
-	if(deleted_tags.length > 0)
-	{
-		document.querySelectorAll(deleted_tags.map(d => `a[data-id-qualified="${d}"]`).join(',')).forEach(a => {
-			a.title = 'Tag is being deleted';
-			a.classList.add('zrxiv_deleted');
-		});
-	}
-}
-
-function update_deleted(deleted)
-{
-	const deleted_new = Array.from(new Set(read_deleted().concat(deleted.trim().split(' '))));
-	var date = new Date();
-	const expires_in_minutes = 15;
-	date.setTime(date.getTime() + expires_in_minutes * 60 * 1000);
-	document.cookie = `deleted=${deleted_new.join(',')}; expires=${date.toGMTString()}`;
-	mark_deleted();
-}
-
-function read_deleted()
-{
-	let deleted = document.cookie.split('deleted=');
-	deleted = deleted.length >= 2 ? deleted[1].split(';')[0].trim() : '';
-	deleted = deleted.length > 0 ? deleted.split(',') : [];
-	return deleted.filter(d => d).map(d => d.trim());
-}
-
 class ZrxivFrontend
 {
 	constructor(container, options, href)
@@ -109,6 +65,45 @@ class ZrxivFrontend
 				self.ui.zrxiv_hide_show_elements.forEach(elem => elem.classList.remove('zrxiv_hide_show_hidden'));
 			}
 		};
+	}
+
+	update_deleted(deleted_add)
+	{
+		let deleted = document.cookie.split('deleted=');
+		deleted = deleted.length >= 2 ? deleted[1].split(';')[0].trim() : '';
+		deleted = deleted.length > 0 ? deleted.split(',') : [];
+		deleted = deleted.filter(d => d).map(d => d.trim());
+
+		if(deleted_add)
+		{
+			deleted = Array.from(new Set(deleted.concat(deleted_add.trim().split(' '))));
+			let date = new Date();
+			const expires_in_minutes = 15;
+			date.setTime(date.getTime() + expires_in_minutes * 60 * 1000);
+			document.cookie = `deleted=${deleted.join(',')}; expires=${date.toGMTString()}`;
+		}
+
+		const deleted_docs = deleted.filter(d => !d.endsWith('/'));
+		const deleted_tags = deleted.filter(d => d.endsWith('/'));
+		if(deleted_docs.length > 0)
+		{
+			document.querySelectorAll(deleted_docs.map(d => 'li[data-id-qualified' + (d.startsWith('/') ? '$' : '') + `="${d}"]`).join(',')).forEach(li => {
+				li.title = 'Document is being deleted. Please wait a few minutes.';
+				li.classList.add('zrxiv_deleted');
+				const checkbox = li.querySelector('input[type=checkbox]');
+				checkbox.checked = false;
+				checkbox.disabled = true;
+			});
+		}
+
+		if(deleted_tags.length > 0)
+		{
+			console.log(deleted_tags.map(d => `a[data-id-qualified="${d}"]`).join(','));
+			document.querySelectorAll(deleted_tags.map(d => `a[data-id-qualified="${d}"]`).join(',')).forEach(a => {
+				a.title = 'Tag is being deleted. Please wait a few minutes.';
+				a.classList.add('zrxiv_deleted');
+			});
+		}
 	}
 
 	render_tag(tag, checked)
@@ -270,7 +265,7 @@ class ZrxivFrontend
 					}
 					await this.backend.auto_save(false);
 					this.operation_status(null);
-					update_deleted('/' + this.backend.doc.id);
+					this.update_deleted('/' + this.backend.doc.id);
 					this.backend.doc = null;
 				}
 				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
@@ -305,7 +300,7 @@ class ZrxivFrontend
 						return;
 					}
 					this.operation_status(null, null, this.ui.zrxiv_delete_from_tag_button);
-					update_deleted(button.dataset.tag + '/' + this.backend.doc.id);
+					this.update_deleted(button.dataset.tag + '/' + this.backend.doc.id);
 					this.backend.doc = null;
 				}
 				
@@ -327,7 +322,7 @@ class ZrxivFrontend
 					return;
 				}
 				this.operation_status(null, null, this.ui.zrxiv_delete_tag_button);
-				update_deleted(this.ui.zrxiv_delete_tag_button_status.dataset.tag + '/');
+				this.update_deleted(this.ui.zrxiv_delete_tag_button_status.dataset.tag + '/');
 				this.ui.zrxiv_delete_tag_button_status.className = 'zrxiv_delete_tag_ok';
 				await delay(this.operation_timeout);
 				window.location.href = this.home_page;
@@ -383,6 +378,7 @@ class ZrxivFrontend
 					this.ui.zrxiv_delete_from_tag_button.hidden = false;
 					this.ui.zrxiv_delete_from_tag_button_status.dataset.tag = tag;
 				}
+				this.update_deleted();
 				break;
 		}
 			
@@ -448,7 +444,7 @@ class ZrxivFrontend
 			else
 				await this.document_action('zrxiv_saved');
 		}
-		else 
+		else
 			this.document_action(zrxiv_page);
 	}
 }
