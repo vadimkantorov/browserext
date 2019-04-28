@@ -6,7 +6,7 @@ function mark_deleted()
 
 	if(deleted_docs.length > 0)
 	{
-		document.querySelectorAll(deleted_docs.map(d => 'li[data-id-qualified' + (d.startsWith('/') ? '$' : '') + `="${d}"]`)).join(',')).forEach(li => {
+		document.querySelectorAll(deleted_docs.map(d => 'li[data-id-qualified' + (d.startsWith('/') ? '$' : '') + `="${d}"]`).join(',')).forEach(li => {
 			li.title = 'Document is being deleted';
 			li.classList.add('zrxiv_deleted');
 			const checkbox = li.querySelector('input[type=checkbox]');
