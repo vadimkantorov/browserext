@@ -327,7 +327,7 @@ class ZrxivFrontend
 					return;
 				}
 				this.operation_status(null, null, this.ui.zrxiv_delete_tag_button);
-				update_deleted(this.ui.zrxiv_delete_tag_button_status.dataset.tag);
+				update_deleted(this.ui.zrxiv_delete_tag_button_status.dataset.tag + '/');
 				this.ui.zrxiv_delete_tag_button_status.className = 'zrxiv_delete_tag_ok';
 				await delay(this.operation_timeout);
 				window.location.href = this.home_page;
