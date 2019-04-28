@@ -1,32 +1,45 @@
-function read_deleted()
-{
-	let docs = document.cookie.split('deleted=');
-	docs = docs.length >= 2 ? docs[1].split(';')[0].trim() : '';
-	docs = docs.length > 0 ? docs.split(',') : [];
-	return docs.filter(doc => doc).map(doc => doc.trim());
-}
-
 function mark_deleted()
 {
-	const docs = read_deleted();
-	if(docs.length > 0)
-		document.querySelectorAll(docs.map(doc => `li[data-id="${doc}"]`).join(',')).forEach(li => {
+	const deleted = read_deleted();
+	const deleted_docs = deleted.filter(d => !d.endsWith('/'));
+	const deleted_tags = deleted.filter(d => d.endsWith('/'));
+
+	if(deleted_docs.length > 0)
+	{
+		document.querySelectorAll(deleted_docs.map(d => 'li[data-id-qualified' + (d.startsWith('/') ? '$' : '') + `="${d}"]`)).join(',')).forEach(li => {
 			li.title = 'Document is being deleted';
-			li.classList.add('zrxiv_doc_deleted');
+			li.classList.add('zrxiv_deleted');
 			const checkbox = li.querySelector('input[type=checkbox]');
 			checkbox.checked = false;
 			checkbox.disabled = true;
 		});
+	}
+
+	if(deleted_tags.length > 0)
+	{
+		document.querySelectorAll(deleted_tags.map(d => `a[data-id-qualified="${d}"]`).join(',')).forEach(a => {
+			a.title = 'Tag is being deleted';
+			a.classList.add('zrxiv_deleted');
+		});
+	}
 }
 
-function update_deleted(docs)
+function update_deleted(deleted)
 {
-	const expires_in_minutes = 15;
+	const deleted_new = Array.from(new Set(read_deleted().concat(deleted.trim().split(' '))));
 	var date = new Date();
+	const expires_in_minutes = 15;
 	date.setTime(date.getTime() + expires_in_minutes * 60 * 1000);
-	const deleted_docs = Array.from(new Set(read_deleted().concat(docs.trim().split(' '))));
-	document.cookie = `deleted=${deleted_docs.join(',')}; expires=${date.toGMTString()}`;
+	document.cookie = `deleted=${deleted_new.join(',')}; expires=${date.toGMTString()}`;
 	mark_deleted();
+}
+
+function read_deleted()
+{
+	let deleted = document.cookie.split('deleted=');
+	deleted = deleted.length >= 2 ? deleted[1].split(';')[0].trim() : '';
+	deleted = deleted.length > 0 ? deleted.split(',') : [];
+	return deleted.filter(d => d).map(d => d.trim());
 }
 
 class ZrxivFrontend
@@ -67,7 +80,6 @@ class ZrxivFrontend
 
 			zrxiv_status_elements : Array.from(container.querySelectorAll('.zrxiv_status')), 
  
-			zrxiv_deleted_docs : container.querySelector('#zrxiv_deleted_docs'), 
 			zrxiv_doc_header : document.querySelector('#zrxiv_doc_header'), 
 			zrxiv_bibtex_selected : document.querySelector('#zrxiv_bibtex_selected')
 		};
@@ -82,7 +94,6 @@ class ZrxivFrontend
 		self.ui.zrxiv_toggle.onclick = async e => self.document_action(self.ui.zrxiv_toggle_status.className, e.target);
 		self.ui.zrxiv_tag.onkeyup = e => e.keyCode != 13 || self.ui.zrxiv_tag_add.click();
 		self.ui.zrxiv_toggle_status.dataset.zrxiv_operation_timeout = self.ui.zrxiv_delete_from_tag_button_status.dataset.zrxiv_operation_timeout = self.operation_timeout.toString();
-		self.ui.zrxiv_deleted_docs.onchange = () => update_deleted(self.ui.zrxiv_deleted_docs.value);
 		self.ui.zrxiv_hide_show.onclick = () => 
 		{
 			if(self.ui.zrxiv_hide_show_status.className == 'zrxiv_hide_show_hide')
@@ -203,23 +214,6 @@ class ZrxivFrontend
 				this.operation_status(null);
 				break;
 
-			case 'zrxiv_delete_tag':
-				this.operation_status('deleting', true, this.ui.zrxiv_delete_tag_button);
-				try
-				{
-					await this.backend.del_tag(this.ui.zrxiv_delete_tag_button_status.dataset.tag);
-				}
-				catch(exception)
-				{
-					this.document_action('zrxiv_error', exception);
-					return;
-				}
-				this.operation_status(null, null, this.ui.zrxiv_delete_tag_button);
-				this.ui.zrxiv_delete_tag_button_status.className = 'zrxiv_delete_tag_ok';
-				await delay(this.operation_timeout);
-				window.location.href = this.home_page;
-				break;
-
 			case 'zrxiv_auto_save':
 				this.ui.zrxiv_toggle_status.className = 'zrxiv_prevent_auto_save';
 				break;
@@ -276,8 +270,7 @@ class ZrxivFrontend
 					}
 					await this.backend.auto_save(false);
 					this.operation_status(null);
-					this.ui.zrxiv_deleted_docs.value += ' ' + this.backend.doc.id;
-					this.ui.zrxiv_deleted_docs.dispatchEvent(new Event('change'));
+					update_deleted('/' + this.backend.doc.id);
 					this.backend.doc = null;
 				}
 				this.ui.zrxiv_toggle_status.className = (this.ui.zrxiv_toggle_status.dataset.abort != false.toString()) ? 'zrxiv_delete_aborted' : 'zrxiv_delete_ok';
@@ -312,6 +305,7 @@ class ZrxivFrontend
 						return;
 					}
 					this.operation_status(null, null, this.ui.zrxiv_delete_from_tag_button);
+					update_deleted(button.dataset.tag + '/' + this.backend.doc.id);
 					this.backend.doc = null;
 				}
 				
@@ -319,6 +313,24 @@ class ZrxivFrontend
 				await delay(this.operation_timeout);
 				button.className = 'zrxiv_delete_selected_from_tag';
 				}
+				break;
+
+			case 'zrxiv_delete_tag':
+				this.operation_status('deleting', true, this.ui.zrxiv_delete_tag_button);
+				try
+				{
+					await this.backend.del_tag(this.ui.zrxiv_delete_tag_button_status.dataset.tag);
+				}
+				catch(exception)
+				{
+					this.document_action('zrxiv_error', exception);
+					return;
+				}
+				this.operation_status(null, null, this.ui.zrxiv_delete_tag_button);
+				update_deleted(this.ui.zrxiv_delete_tag_button_status.dataset.tag);
+				this.ui.zrxiv_delete_tag_button_status.className = 'zrxiv_delete_tag_ok';
+				await delay(this.operation_timeout);
+				window.location.href = this.home_page;
 				break;
 
 			case 'zrxiv_import_selected':
