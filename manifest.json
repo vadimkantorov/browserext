@@ -20,11 +20,7 @@
 		"default_icon" : {"256" : "logo.png", "40" : "logo.png"}
 	},
 	"web_accessible_resources": ["frontend.html", "options.html", "bibtex.js", "parsers.js", "backend.js", "frontend.js", "options.js"],
-	"options_ui" : {"page" : "options.html", "open_in_tab" : false, "browser_style" : true},
+	"options_ui" : {"page" : "options.html", "open_in_tab" : false},
 	"options_page" : "options.html",
-	"homepage_url" : "https://github.com/zrxiv/zrxiv",
-
-	"applications": {
-		"gecko": {"id": "vadimkantorov@gmail.com"}
-	}
+	"homepage_url" : "https://github.com/zrxiv/zrxiv"
 }
